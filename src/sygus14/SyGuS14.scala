@@ -47,15 +47,15 @@ object SyGuS14 {
   case class LetTerm(list: List[(String,SortExpr,Term)],term: Term) extends Term
 
   sealed trait GTerm
-
-  // FIXME: add GTerm
-//GTerm ::= (Symbol GTerm∗) | Literal | Symbol | LetGTerm
-//| (Constant SortExpr)
-//| (Variable SortExpr)
-//| (InputVariable SortExpr)
-//| (LocalVariable SortExpr)
-//LetGTermi ::= (let ((Symbol SortExpr GTerm)+) GTerm)
-
+  case class CompositeGTerm(symbol: String,terms: List[GTerm]) extends GTerm
+  case class LiteralGTerm(literal: Literal) extends GTerm
+  case class SymbolGTerm(symbol: String) extends GTerm  
+  case class LetGTerm(list: List[(String,SortExpr,GTerm)],term: GTerm) extends GTerm
+  // Since we're not checking semantics at this point, GenericGTerm
+  // is used as a placeholder for the other GTerms of Section 3.6, i.e. 
+  // Constant, Variable, InputVariable LocalVariable 
+  case class GenericGTerm(identifier: String,sortExpr: SortExpr) extends GTerm
+  
   final case class NTDef(symbol: String,sortExpr:SortExpr,gterms: List[GTerm])
   
   /////////////////////////////////
@@ -79,12 +79,15 @@ object SyGuS14 {
     // FIXME - which of these are regex characters that should be escaped?
     val specialChar = "[_+−*&|!~<>=/%?.$^]".r 
   
-//def symbol: Parser[String] = ( "[a-zA-Z]".r | specialChar ) ~ rep( "[a-zA-Z0-9]".r | specialChar ) ^^ { 
-//      case hd ~ tl => jeep.lang.Diag.println(hd ++ tl.mkString); hd ++ tl.mkString }
+  //def symbol: Parser[String] = ( "[a-zA-Z]".r | specialChar ) ~ rep( "[a-zA-Z0-9]".r | specialChar ) ^^ { 
+  //      case hd ~ tl => jeep.lang.Diag.println(hd ++ tl.mkString); hd ++ tl.mkString }
 
+    val boolean: Parser[Boolean] = "true" ^^^ { true } | "false" ^^^ { false }
+    val genericGtermToken: Parser[String] = symbol | wholeNumber | floatingPointNumber | boolean ^^ { x => x.toString } 
+    
     def symbol: Parser[String] = """[a-zA-Z_+−*&|!~<>=/%?.$^]([a-zA-Z0-9_+−*&|!~<>=/%?.$^])*""".r    
   
-    def setLogicCmd: Parser[SetLogicCmd] = "(set-logic" ~ symbol ~ ")" ^^ { 
+    def Cmd: Parser[SetLogicCmd] = "(set-logic" ~ symbol ~ ")" ^^ { 
       case _ ~ sym ~ _ => SetLogicCmd(sym) 
     }
   
@@ -108,7 +111,7 @@ object SyGuS14 {
 
     def intConst: Parser[IntConst] = wholeNumber ^^ { x => IntConst(x.toInt) }
     def realConst: Parser[RealConst] = floatingPointNumber ^^ { x => RealConst(x.toDouble) }
-    def boolConst: Parser[BoolConst] = "true" ^^^ { BoolConst(true) } | "false" ^^^ { BoolConst(false) }
+    def boolConst: Parser[BoolConst] = boolean ^^ { b => BoolConst(b) }
     def bvConst: Parser[BVConst] =  {
       def bitsToBV(str: String): List[Boolean] = str.toList.map { x => if( x == '0' ) false else true }
       def hexToBV(str: String): List[Boolean] = bitsToBV(new java.math.BigInteger(str, 16).toString(2))
@@ -125,7 +128,9 @@ object SyGuS14 {
     /////////////////////////////////
   
     def letTerm: Parser[LetTerm] = {
-      def entry: Parser[(String,SortExpr,Term)] = ???   
+      def entry: Parser[(String,SortExpr,Term)] = symbol ~ sortExpr ~ term ^^ {
+        case a ~ b ~ c => (a,b,c)         
+      }
       "(let" ~ "(" ~ rep1(entry) ~ ")" ~ term ~ ")" ^^ {
         case _ ~ _ ~ list ~ _ ~ t ~ _ => LetTerm(list,t) 
       }
@@ -138,13 +143,30 @@ object SyGuS14 {
     def literalTerm: Parser[LiteralTerm] = literal ^^ { x => LiteralTerm(x) }
     def symbolTerm: Parser[SymbolTerm] = symbol ^^ { x => SymbolTerm(x) }
   
-    def term: Parser[Term] = ( compositeTerm | literalTerm | symbolTerm | letTerm ) ^^ {  
-      case t => t
-    }
+    def term: Parser[Term] = compositeTerm | literalTerm | symbolTerm | letTerm
   
     /////////////////////////////////
 
-    def gterm: Parser[GTerm] = ???  
+    def compositeGTerm: Parser[CompositeGTerm] = "(" ~ symbol ~ rep(gterm) ~ ")" ^^ {
+      case _ ~ sym ~ list ~ _ => CompositeGTerm(sym,list)
+    }
+    
+    def literalGTerm: Parser[LiteralGTerm] = literal ^^ { x => LiteralGTerm(x) }
+    def symbolGTerm: Parser[SymbolGTerm] = symbol ^^ { x => SymbolGTerm(x) }
+    def letGTerm: Parser[LetGTerm] = {
+      def entry: Parser[(String,SortExpr,GTerm)] = symbol ~ sortExpr ~ gterm ^^ {
+        case a ~ b ~ c => (a,b,c)         
+      }
+      "(let" ~ "(" ~ rep1(entry) ~ ")" ~ gterm ~ ")" ^^ {
+        case _ ~ _ ~ list ~ _ ~ t ~ _ => LetGTerm(list,t) 
+      }
+    }
+    
+    def genericGTerm: Parser[GenericGTerm] = ??? // FIXME
+    
+    def gterm: Parser[GTerm] = compositeGTerm | literalGTerm | symbolGTerm | 
+      letGTerm | genericGTerm
+    
     val quotedLiteral: Parser[String] = "([a-zA-Z0-9.])+".r
     def ntDef: Parser[NTDef] = "(" ~ symbol ~ sortExpr ~ rep(gterm) ~ ")" ^^ {
       case _ ~ sym ~ se ~ list ~ _ => NTDef(sym, se, list )     
@@ -152,11 +174,17 @@ object SyGuS14 {
   
     /////////////////////////////////
   
+    def setLogicCmd: Parser[SetLogicCmd] = "(set-logic" ~ symbol ~ ")" ^^ { 
+      case _ ~ sym ~ _ => SetLogicCmd(sym) 
+    }
+    
     def sortDefCmd: Parser[SortDefCmd] = "(define-sort" ~ symbol ~ sortExpr  ~ ")" ^^ { 
-      case _ ~ sym ~ se ~ _ => SortDefCmd(sym,se) }
+      case _ ~ sym ~ se ~ _ => SortDefCmd(sym,se) 
+    }
   
     def varDeclCmd: Parser[VarDeclCmd] = "(declare-var" ~ symbol ~ sortExpr ~ ")" ^^ { 
-      case _ ~ sym ~ se ~ _ => VarDeclCmd(sym,se) } 
+      case _ ~ sym ~ se ~ _ => VarDeclCmd(sym,se) 
+    } 
   
     def funDeclCmd: Parser[FunDeclCmd] = "(declare-fun" ~ symbol ~ "(" ~ rep(sortExpr) ~ ")" ~ sortExpr ~ ")" ^^ {
       case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ => FunDeclCmd(sym,list,se)
