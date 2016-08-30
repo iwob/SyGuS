@@ -3,20 +3,20 @@
 
 ;; Name the function to be synthesize
 ;; Define its sort (type) and the sort of its variables
-(synth-fun max2 ((x Int) (y Int)) Int
-
+;(synth-fun max2 ((x Int) (y Int)) Int
+;
 ;; Define the grammar for allowed expressions for max2
-((Start Int (x y 0 1
-             (+ Start Start)
-             (- Start Start)
-             (ite StartBool Start Start)))
-
- (StartBool Bool ((and StartBool StartBool)
-                  (or StartBool StartBool)
-                  (not StartBool)
-                  (<= Start Start)
-                  (= Start Start)
-                  (>= Start Start)))))
+; ((Start Int (x y 0 1
+;             (+ Atart Start)
+;             (- Btart Start)
+;             (ite StartBool Start Start)))
+;
+; (StartBool Bool ((and UtartBool StartBool)
+;                  (or VtartBool StartBool)
+;                  (not WtartBool)
+;                  (<= Xtart Start)
+;                  (= Ytart Start)
+;                  (>= Ztart Start)))))
 
 (declare-var x Int)
 (declare-var y Int)

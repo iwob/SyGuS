@@ -44,10 +44,61 @@ class TestSyGuS14Parser {
     assertEquals( Right(VarDeclCmd("x",IntSortExpr())), parser.validate(parser.varDeclCmd, "(declare-var x Int)")  )    
     assertEquals( Right(VarDeclCmd("x",IntSortExpr())), parser.validate(parser.cmd, "(declare-var x Int)")  )    
     
-    jeep.lang.Diag.println(parser.validate(parser.cmd, "(constraint (>= (max2 x y) x))" ))
+    // jeep.lang.Diag.println(parser.validate(parser.cmd, "(constraint (>= (max2 x y) x))" ))
     assertTrue( parser.validate(parser.cmd, "(constraint (>= (max2 x y) x))" ).isRight )
-    
+    assertTrue( parser.validate(parser.cmd, "(constraint (or (= x (max2 x y)) (= y (max2 x y))))" ).isRight )
+    jeep.lang.Diag.println(parser.validate(parser.funDefCmd, "(define-fun iff ((a Bool) (b Bool)) Bool (not (xor a b)))" ) )    
+    jeep.lang.Diag.println(parser.validate(parser.cmd, "(define-fun iff ((a Bool) (b Bool)) Bool (not (xor a b)))" ) )
+    assertTrue( parser.validate(parser.cmd, "(define-fun iff ((a Bool) (b Bool)) Bool (not (xor a b)))" ).isRight )
 
+    val gterm = """
+    (0 1 x y
+      (+ IntExpr IntExpr)
+      (- IntExpr IntExpr)
+    )"""
+    jeep.lang.Diag.println(parser.validate(parser.gterm, gterm ) )
+    
+    val ntDef = """
+    (IntExpr Int 
+      (0 1 x y
+        (+ IntExpr IntExpr)
+        (- IntExpr IntExpr)
+      )
+    )"""
+    jeep.lang.Diag.println(parser.validate(parser.ntDef, ntDef ) )
+    
+    val synthFun = """
+    (synth-fun max2 ((x Int) (y Int)) Int
+      (
+        (Start Int 
+          (x y 0 1
+            (ite StartBool Start Start)
+            (- Ftart Start)          
+            (+ Atart Start)
+          )
+        )
+        (StartBool Bool 
+          (
+            (and UtartBool StartBool)
+            (or VtartBool StartBool)
+            (not WtartBool)
+            (<= Xtart Start)
+            (= Ytart Start)
+            (>= Ztart Start)
+          )
+        )
+      )
+    )"""
+
+//    def synthFunCmd: Parser[SynthFunCmd] = { 
+//      def entry: Parser[(String,SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => (s,e) }    
+//      "(synth-fun" ~ symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~ "(" ~ rep1(ntDef) ~ ")" ^^ {
+//        case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ ~ list2 ~ _ => SynthFunCmd(sym,list,se,list2)
+//      }
+//    }
+    
+    jeep.lang.Diag.println(parser.validate(parser.synthFunCmd, synthFun ))
+    // assertTrue( parser.validate(parser.synthFunCmd, synthFun ).isRight )
         
 /****    
     def sortDefCmd: Parser[SortDefCmd] = "(define-sort" ~ symbol ~ sortExpr  ~ ")" ^^ { 
@@ -64,14 +115,6 @@ class TestSyGuS14Parser {
       }
     }
   
-    def synthFunCmd: Parser[SynthFunCmd] = { 
-      def entry: Parser[(String,SortExpr)] = symbol ~ sortExpr ^^ { case s ~ e => (s,e) }    
-      "(synth-fun" ~ symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~ rep1(ntDef) ~ ")" ^^ {
-        case _ ~ sym ~ _ ~ list ~ _ ~ se ~ list2 ~ _ => SynthFunCmd(sym,list,se,list2)
-      }
-    }
-  
-    def checkSynthCmd: Parser[CheckSynthCmd] = "(check-synth)" ^^^ { CheckSynthCmd() }
   
     def setOptsCmd: Parser[SetOptsCmd] = {
 ****/
@@ -82,7 +125,9 @@ class TestSyGuS14Parser {
   @Test
   def testExample: Unit = {
      val path = System.getProperty("user.dir") + "/resources/example.txt"
-     assertTrue( parseSyGuS14File(new java.io.File(path)).isRight )
+     val pr = parseSyGuS14File(new java.io.File(path))
+     jeep.lang.Diag.println(pr)
+     assertTrue( pr.isRight )
   }
 
   /////////////////////////////////
