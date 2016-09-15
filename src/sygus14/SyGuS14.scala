@@ -84,21 +84,33 @@ object SyGuS14 {
       "BitVec", "Array", "Int", "Bool", "Enum", "Real", "Constant", "Variable", "InputVariable", 
       "LocalVariable", "let", "true", "false" )  
     
-
     // FIXME - which of these are regex characters that should be escaped?
-    val specialChar = "[_+−*&|!~<>=/%?.$^]".r 
-  
-  //def symbol: Parser[String] = ( "[a-zA-Z]".r | specialChar ) ~ rep( "[a-zA-Z0-9]".r | specialChar ) ^^ { 
-  //      case hd ~ tl => jeep.lang.Diag.println(hd ++ tl.mkString); hd ++ tl.mkString }
+//    val specialChar = "[_\\+−\\*&\\|\\!~<>=/%\\?\\.\\$\\^]".r 
+//
+//  val symbolHd: Parser[String] = ( "[a-zA-Z]".r | specialChar )
+//  val symbolTl: Parser[String] = ( "[a-zA-Z0-9]".r | specialChar )  
+    
+//  def symbol: Parser[String] = ( "[a-zA-Z]".r | specialChar ) ~ rep( "[a-zA-Z0-9]".r | specialChar ) ^^ { 
+//        case hd ~ tl => jeep.lang.Diag.println(hd ++ tl.mkString); hd ++ tl.mkString }
+  def symbol: Parser[String] = "[a-zA-Z_\\+\\−\\*&\\|\\!~<>=/%\\?\\.\\$\\^]([a-zA-Z0-9_\\+\\−\\*&\\|\\!~<>=/%\\?\\.\\$\\^])*".r
 
     val boolean: Parser[Boolean] = "true" ^^^ { true } | "false" ^^^ { false }
-    val genericGtermToken: Parser[String] = ( "+" | "-" | ">=" | "<=" | symbol ) ^^ { x => Diag.println(x); x } // FIXME
+//    val genericGtermToken: Parser[String] = ( "+" | "-" | ">=" | "<=" | symbol ) ^^ { x => Diag.println(x); x } // FIXME
     // """.*\S.*""".r
       // symbol // "[^ \t\r\n\f]".r // one or more non-whitespace 
       // symbol | wholeNumber | floatingPointNumber | boolean ^^ { x => x.toString } 
+    // val genericGtermToken: Parser[String] = ( "Constant" | "Variable" | "InputVariable" | "LocalVariable" | "+" | "-" | ">=" | "<=" | symbol ) ^^ { x => Diag.println(x); x } // FIXME
+val genericGtermToken: Parser[String] = ( "Constant" | "Variable" | "InputVariable" | "LocalVariable" | symbol ) ^^ { x => Diag.println(x); x } // FIXME    
+
+//    val specialChar = "_" | "+" | "-" | "*" | "&" | "|" | "!" | "~" | 
+//      "<" | ">" | "=" | "/" | "%" | "?" | "." | "$" | "^"
     
+    // val symbolCC = "[a-zA-Z]".r |"_"|"+"|"-"|"*"|"&"|"|"|"!"|"~"|"<"|">"|"="|"/"|"%"|"?"|"."|"$"|"^"
+//    val symbolCC = "[a-zA-Z]".r | specialChar
+//    def symbol: Parser[String] = symbolCC ~ rep( symbolCC | "[0-9]".r ) ^^ { case hd ~ tl => hd ++ tl.mkString }
+      
     // def symbol: Parser[String] = "[a-zA-Z_+−*&|!~<>=/%?.$^]([a-zA-Z0-9_+−*&|!~<>=/%?.$^])*".r
-  def symbol: Parser[String] = "[a-zA-Z_+−*<>=]([a-zA-Z0-9_+−*<>=])*".r
+ // def symbol: Parser[String] = "[a-zA-Z_+−*<>=]([a-zA-Z0-9_+−*<>=])*".r
   //   def symbol: Parser[String] = "[a-zA-Z_]([a-zA-Z0-9_])*".r // FIXME    
   
     def Cmd: Parser[SetLogicCmd] = "(set-logic" ~ symbol ~ ")" ^^ { 
@@ -135,7 +147,11 @@ object SyGuS14 {
   
     def enumConst: Parser[EnumConst] = symbol ~ "::" ~ symbol ^^ { case a ~ _ ~ b => EnumConst(a,b) }
   
-    def literal: Parser[Literal] = intConst | realConst | boolConst | bvConst | enumConst
+    def literal: Parser[Literal] = intConst ^^ { x => jeep.lang.Diag.println(x);x } | 
+      realConst ^^ { x => jeep.lang.Diag.println(x);x }  | 
+      boolConst ^^ { x => jeep.lang.Diag.println(x);x }  | 
+      bvConst ^^ { x => jeep.lang.Diag.println(x);x }  | 
+      enumConst ^^ { x => jeep.lang.Diag.println(x);x }
     //  | failure("not a literal") ) 
   
     /////////////////////////////////
@@ -160,7 +176,8 @@ object SyGuS14 {
   
     /////////////////////////////////
 
-    def compositeGTerm: Parser[CompositeGTerm] = "(" ~ symbol ~ rep(gterm) ~ ")" ^^ {
+    def compositeGTerm: Parser[CompositeGTerm] = "(" ~ ( symbol ^^ { x => jeep.lang.Diag.println(x);x } ) ~ 
+      rep(gterm) ~ ")" ^^ {
       case _ ~ sym ~ list ~ _ => CompositeGTerm(sym,list)
     }
     
@@ -179,12 +196,24 @@ object SyGuS14 {
       case _ ~ tok ~ se ~ _ => GenericGTerm(tok,se)
     }
   
-    def gterm: Parser[GTerm] = compositeGTerm | literalGTerm | symbolGTerm | 
-      letGTerm | genericGTerm
+    def gterm: Parser[GTerm] =  
+      compositeGTerm ^^ { x => jeep.lang.Diag.println(x);x } |      
+      literalGTerm ^^ { x => jeep.lang.Diag.println(x);x } |
+      letGTerm ^^ { x => jeep.lang.Diag.println(x);x } |    
+      symbolGTerm ^^ { x => jeep.lang.Diag.println(x);x } | 
+      genericGTerm ^^ { x => jeep.lang.Diag.println(x);x }
     
-    val quotedLiteral: Parser[String] = "([a-zA-Z0-9.])+".r
-    def ntDef: Parser[NTDef] = "(" ~ symbol ~ sortExpr ~ rep1(gterm) ~ ")" ^^ {
-      case _ ~ sym ~ se ~ list ~ _ => NTDef(sym, se, list )     
+    val litChar: Parser[String] = "[a-zA-Z0-9]".r | "."
+    // val quotedLiteral: Parser[String] = "([a-zA-Z0-9.])+".r
+// QUOTEDLIT               "\""([a-z]|[A-Z]|{DIGIT}|".")+"\""
+    val quotedLiteral: Parser[String] = "\"" ~ rep1( litChar ) ~ "\"" ^^ { 
+      case _ ~ chars ~ _ => chars.mkString       
+    }
+
+    def ntDef: Parser[NTDef] = "(" ~ ( symbol ^^ { x => jeep.lang.Diag.println(x);x } ) ~ 
+      ( sortExpr ^^ { x => jeep.lang.Diag.println(x);x } ) ~ 
+      ( rep1(gterm) ^^ { x => jeep.lang.Diag.println(x);x } ) ~ ")" ^^ {
+      case _ ~ sym ~ se ~ list ~ _ => jeep.lang.Diag.println(sym, se, list); NTDef(sym, se, list )     
     }
   
     /////////////////////////////////
@@ -197,7 +226,7 @@ object SyGuS14 {
       case _ ~ sym ~ se ~ _ => SortDefCmd(sym,se) 
     }
   
-    def varDeclCmd: Parser[VarDeclCmd] = "(declare-var" ~ symbol ~ sortExpr ~ ")" ^^ { 
+    def varDeclCmd: Parser[VarDeclCmd] = "(declare-var" ~ ( symbol ^^ { case x => jeep.lang.Diag.println( x ); x } ) ~ sortExpr ~ ")" ^^ { 
       case _ ~ sym ~ se ~ _ => VarDeclCmd(sym,se) 
     } 
   
@@ -213,9 +242,10 @@ object SyGuS14 {
     }
   
     def synthFunCmd: Parser[SynthFunCmd] = { 
-      def entry: Parser[(String,SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => (s,e) }    
-      "(synth-fun" ~ symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~ "(" ~ rep1(ntDef) ~ ")" ^^ {
-        case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ ~ list2 ~ _ => SynthFunCmd(sym,list,se,list2)
+      def entry: Parser[(String,SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => jeep.lang.Diag.println((s,e)); (s,e) }    
+      "(synth-fun" ~ symbol ~ "(" ~ rep(entry) ~ ")" ~ ( sortExpr ^^ { x => jeep.lang.Diag.println(x);x }  ) ~ 
+      "(" ~ ( rep1(ntDef) ^^ { x => jeep.lang.Diag.println(x);x } ) ~ ")" ~ ")" ^^ {
+        case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ ~ list2 ~ _ ~ _ => SynthFunCmd(sym,list,se,list2)
       }
     }
   

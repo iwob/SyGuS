@@ -67,6 +67,113 @@ class TestSyGuS14Parser {
     parseSyGuS14Text(scala.io.Source.fromFile(f).mkString)
   
   /////////////////////////////////
+
+  @Test
+  def testSymbol: Unit = {
+    val parser = new Parser    
+    assertEquals( Right("<="), parser.validate(parser.symbol, "<=")  )    
+    assertEquals( Right("a0"), parser.validate(parser.symbol, "a0")  ) 
+    assertEquals( Right("x"), parser.validate(parser.symbol, "x")  )     
+  }
+
+  @Test
+  def testGTerm: Unit = {
+    val parser = new Parser
+    // FIXME: can't parse - for some reason, subsituting "minus"    
+    val gterm = """
+      (x y 0 1
+        (ite StartBool Start Start)
+        (minus Ftart Start)          
+        (+ Atart Start)
+      )"""
+    
+    jeep.lang.Diag.println(parser.validate(parser.gterm, gterm ) )
+    assertTrue( parser.validate(parser.gterm, gterm ).isRight )    
+  }
+  
+  /////////////////////////////////
+
+  @Test
+  def testNTDef: Unit = {
+    val parser = new Parser
+
+    // FIXME: can't parse - for some reason, subsituting "minus"
+    val ntDef1 = """
+    (Start Int 
+        (x y 0 1
+          (+ Start Start)
+          (minus Start Start)
+          (ite StartBool Start Start)
+        )
+    )"""
+             
+    // jeep.lang.Diag.println(parser.validate(parser.ntDef, ntDef1 ) )
+    assertTrue( parser.validate(parser.ntDef, ntDef1 ).isRight )
+    
+    val ntDef2 = """    
+    (StartBool Bool 
+      (
+        (and StartBool StartBool)
+        (or StartBool StartBool)
+        (not StartBool)
+        (le Start Start)
+        (eq Start Start)
+        (ge Start Start)
+      )
+    )"""
+jeep.lang.Diag.println(parser.validate(parser.ntDef, ntDef1 ) )
+    assertTrue( parser.validate(parser.ntDef, ntDef2 ).isRight )
+  }
+  
+  /////////////////////////////////  
+  
+  @Test
+  def testSynthFunCmd: Unit = {
+    val parser = new Parser    
+    
+    // FIXME: can't parse <=,=,>= for some reason, subsituting leq etc    
+    val synthFun1 = """
+    (synth-fun max2 ((x Int) (y Int)) Int
+      (
+        (Start Int 
+          (x y 0 1
+            (+ Start Start)
+            (minus Start Start)
+            (ite StartBool Start Start)
+          )
+        )
+      )
+    )"""
+
+    assertTrue( parser.validate(parser.synthFunCmd, synthFun1 ).isRight )
+// /**************    
+    val synthFun2 = """
+    (synth-fun max2 ((x Int) (y Int)) Int
+      (
+        (Start Int 
+          (x y 0 1
+            (+ Start Start)
+            (minus Start Start)
+            (ite StartBool Start Start)
+          )
+        )
+        (StartBool Bool 
+          (
+            (and StartBool StartBool)
+            (or StartBool StartBool)
+            (not StartBool)
+            (le Start Start)
+            (eq Start Start)
+            (ge Start Start)
+          )
+        )
+      )
+    )"""
+    
+    jeep.lang.Diag.println(parser.parse(parser.synthFunCmd, synthFun2 ))
+    assertTrue( parser.validate(parser.synthFunCmd, synthFun2 ).isRight )
+ //**************/  
+  }
   
   @Test
   def testCmds: Unit = {
@@ -86,54 +193,8 @@ class TestSyGuS14Parser {
     jeep.lang.Diag.println(parser.validate(parser.cmd, "(define-fun iff ((a Bool) (b Bool)) Bool (not (xor a b)))" ) )
     assertTrue( parser.validate(parser.cmd, "(define-fun iff ((a Bool) (b Bool)) Bool (not (xor a b)))" ).isRight )
 
-    val gterm = """
-    (0 1 x y
-      (+ IntExpr IntExpr)
-      (- IntExpr IntExpr)
-    )"""
-    jeep.lang.Diag.println(parser.validate(parser.gterm, gterm ) )
     
-    val ntDef = """
-    (IntExpr Int 
-      (0 1 x y
-        (+ IntExpr IntExpr)
-        (- IntExpr IntExpr)
-      )
-    )"""
-    jeep.lang.Diag.println(parser.validate(parser.ntDef, ntDef ) )
     
-    val synthFun = """
-    (synth-fun max2 ((x Int) (y Int)) Int
-      (
-        (Start Int 
-          (x y 0 1
-            (ite StartBool Start Start)
-            (- Ftart Start)          
-            (+ Atart Start)
-          )
-        )
-        (StartBool Bool 
-          (
-            (and UtartBool StartBool)
-            (or VtartBool StartBool)
-            (not WtartBool)
-            (<= Xtart Start)
-            (= Ytart Start)
-            (>= Ztart Start)
-          )
-        )
-      )
-    )"""
-
-//    def synthFunCmd: Parser[SynthFunCmd] = { 
-//      def entry: Parser[(String,SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => (s,e) }    
-//      "(synth-fun" ~ symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~ "(" ~ rep1(ntDef) ~ ")" ^^ {
-//        case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ ~ list2 ~ _ => SynthFunCmd(sym,list,se,list2)
-//      }
-//    }
-    
-    jeep.lang.Diag.println(parser.validate(parser.synthFunCmd, synthFun ))
-    // assertTrue( parser.validate(parser.synthFunCmd, synthFun ).isRight )
         
 /****    
     def sortDefCmd: Parser[SortDefCmd] = "(define-sort" ~ symbol ~ sortExpr  ~ ")" ^^ { 
