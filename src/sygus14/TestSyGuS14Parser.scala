@@ -10,6 +10,41 @@ class TestSyGuS14Parser {
   import SyGuS14._
   
   /////////////////////////////////
+
+  import scala.util.parsing.combinator._
+  
+  class ProcessedSourceParser extends JavaTokenParsers {
+    // def processedSource: Parser[String] = "{" ~ "[\\s\\S]*".r ~  "()" ~ "}" ^^ { case _ ~ src ~ _ ~ _ => src }
+    // def processedSource: Parser[String] = "{" ~ "[\\s\\S]*".r ~ "()\n}" ^^ { case a ~ b ~ c => b }
+    // def processedSource: Parser[String] = "{" ~ """.*\(\)\n}]*""".r ^^ { case a ~ b => b }
+    // def processedSource: Parser[String] = "{" ~ """.*?\(\)\n}""".r ^^ { case a ~ b => b }
+    // def processedSource: Parser[String] = """\{.*(?<!\(\)\n\})(\(\)\n\})""".r
+    // def processedSource: Parser[String] = """\{\n.*(?<!\(\)\n\})(\(\)\n\})""".r
+    def processedSource: Parser[String] = "\\{((?:(?!\\(\\)\\s*\\})[\\s\\S])*)\\(\\)\\s*\\}".r
+  }
+
+  object ProcessedSourceParser {
+    def parse(src: String): Either[String,String] = {
+      val parser = new ProcessedSourceParser
+      parser.parseAll(parser.processedSource,src) match {
+        case m @ parser.Failure(msg, next) => Left(s"Parse failure: $msg" )
+        case m @ parser.Error(msg, next) => Left(s"Parse error: $msg" )
+        case parser.Success(result, next) => Right(result)
+      }
+    }
+  }
+  
+  @Test
+  def testProcessSource: Unit = {
+    val src = """{
+      sdajc sa ksmv fm
+      ()
+    }  
+    """
+    jeep.lang.Diag.println( ProcessedSourceParser.parse( src ) )    
+  }
+  
+  /////////////////////////////////
     
   private def getRecursiveListOfFiles(dir: File): List[File] = {
     val these = dir.listFiles.toList
