@@ -79,16 +79,40 @@ class TestSyGuS14Parser {
   @Test
   def testGTerm: Unit = {
     val parser = new Parser
-    // FIXME: can't parse - for some reason, subsituting "minus"    
-    val gterm = """
+    // FIXME: can't parse - for some reason, substituting "minus"    
+    val gterm1 = """
       (x y 0 1
         (ite StartBool Start Start)
-        (minus Ftart Start)          
-        (+ Atart Start)
+        (minus Start Start)          
+        (+ Start Start)
       )"""
     
-    jeep.lang.Diag.println(parser.validate(parser.gterm, gterm ) )
-    assertTrue( parser.validate(parser.gterm, gterm ).isRight )    
+    // jeep.lang.Diag.println(parser.validate(parser.gterm, gterm1 ) )
+    // assertTrue( parser.validate(parser.gterm, gterm1 ).isRight )
+    assertEquals( 
+      Right( 
+        CompositeGTerm( "x",
+          List(SymbolGTerm("y"), LiteralGTerm(IntConst(0)), LiteralGTerm(IntConst(1)), 
+            CompositeGTerm("ite",List(SymbolGTerm("StartBool"), SymbolGTerm("Start"), SymbolGTerm("Start"))), 
+            CompositeGTerm("minus",List(SymbolGTerm("Start"), SymbolGTerm("Start"))), 
+            CompositeGTerm("+",List(SymbolGTerm("Start"), SymbolGTerm("Start"))))
+        )
+      ), parser.validate(parser.gterm, gterm1 ) )    
+
+    /*******
+    val gterm2 = """
+    (
+        (and StartBool StartBool)
+        (or StartBool StartBool)
+        (not StartBool)
+        (le Start Start)
+        (eq Start Start)
+        (ge Start Start)
+    )"""
+
+    jeep.lang.Diag.println(parser.validate(parser.gterm, gterm2 ) )
+    assertTrue( parser.validate(parser.gterm, gterm2 ).isRight )
+********/
   }
   
   /////////////////////////////////
@@ -97,7 +121,7 @@ class TestSyGuS14Parser {
   def testNTDef: Unit = {
     val parser = new Parser
 
-    // FIXME: can't parse - for some reason, subsituting "minus"
+    // FIXME: can't parse - for some reason, substituting "minus"
     val ntDef1 = """
     (Start Int 
         (x y 0 1
@@ -130,6 +154,20 @@ jeep.lang.Diag.println(parser.validate(parser.ntDef, ntDef1 ) )
   @Test
   def testSynthFunCmd: Unit = {
     val parser = new Parser    
+
+    val synthFunSyGuSCOMP2014HtmlExample5 = """
+    (synth-fun f (( x Int ) ( y Int )) Int
+      (
+        ( Start Int 
+          ( x y z
+            (+ Start Start )
+            (let ( ( z Int Start ) ) Start)
+          )
+        )
+      )
+    )"""
+    
+    assertTrue( parser.validate(parser.synthFunCmd, synthFunSyGuSCOMP2014HtmlExample5 ).isRight )    
     
     // FIXME: can't parse <=,=,>= for some reason, subsituting leq etc    
     val synthFun1 = """
@@ -146,7 +184,6 @@ jeep.lang.Diag.println(parser.validate(parser.ntDef, ntDef1 ) )
     )"""
 
     assertTrue( parser.validate(parser.synthFunCmd, synthFun1 ).isRight )
-// /**************    
     val synthFun2 = """
     (synth-fun max2 ((x Int) (y Int)) Int
       (
@@ -172,7 +209,6 @@ jeep.lang.Diag.println(parser.validate(parser.ntDef, ntDef1 ) )
     
     jeep.lang.Diag.println(parser.parse(parser.synthFunCmd, synthFun2 ))
     assertTrue( parser.validate(parser.synthFunCmd, synthFun2 ).isRight )
- //**************/  
   }
   
   @Test
