@@ -8,41 +8,7 @@ import org.junit.Assert._
 class TestSyGuS14Parser {
 
   import SyGuS14._
-  
-  /////////////////////////////////
-
-  import scala.util.parsing.combinator._
-  
-  class ProcessedSourceParser extends JavaTokenParsers {
-    // def processedSource: Parser[String] = "{" ~ "[\\s\\S]*".r ~  "()" ~ "}" ^^ { case _ ~ src ~ _ ~ _ => src }
-    // def processedSource: Parser[String] = "{" ~ "[\\s\\S]*".r ~ "()\n}" ^^ { case a ~ b ~ c => b }
-    // def processedSource: Parser[String] = "{" ~ """.*\(\)\n}]*""".r ^^ { case a ~ b => b }
-    // def processedSource: Parser[String] = "{" ~ """.*?\(\)\n}""".r ^^ { case a ~ b => b }
-    // def processedSource: Parser[String] = """\{.*(?<!\(\)\n\})(\(\)\n\})""".r
-    // def processedSource: Parser[String] = """\{\n.*(?<!\(\)\n\})(\(\)\n\})""".r
-    def processedSource: Parser[String] = "\\{((?:(?!\\(\\)\\s*\\})[\\s\\S])*)\\(\\)\\s*\\}".r
-  }
-
-  object ProcessedSourceParser {
-    def parse(src: String): Either[String,String] = {
-      val parser = new ProcessedSourceParser
-      parser.parseAll(parser.processedSource,src) match {
-        case m @ parser.Failure(msg, next) => Left(s"Parse failure: $msg" )
-        case m @ parser.Error(msg, next) => Left(s"Parse error: $msg" )
-        case parser.Success(result, next) => Right(result)
-      }
-    }
-  }
-  
-  @Test
-  def testProcessSource: Unit = {
-    val src = """{
-      sdajc sa ksmv fm
-      ()
-    }  
-    """
-    jeep.lang.Diag.println( ProcessedSourceParser.parse( src ) )    
-  }
+  // import scala.util.parsing.combinator._
   
   /////////////////////////////////
     
@@ -87,8 +53,6 @@ class TestSyGuS14Parser {
         (+ Start Start)
       )"""
     
-    // jeep.lang.Diag.println(parser.validate(parser.gterm, gterm1 ) )
-    // assertTrue( parser.validate(parser.gterm, gterm1 ).isRight )
     assertEquals( 
       Right( 
         CompositeGTerm( "x",
@@ -99,7 +63,6 @@ class TestSyGuS14Parser {
         )
       ), parser.validate(parser.gterm, gterm1 ) )    
 
-    /*******
     val gterm2 = """
     (
         (and StartBool StartBool)
@@ -112,7 +75,6 @@ class TestSyGuS14Parser {
 
     jeep.lang.Diag.println(parser.validate(parser.gterm, gterm2 ) )
     assertTrue( parser.validate(parser.gterm, gterm2 ).isRight )
-********/
   }
   
   /////////////////////////////////
