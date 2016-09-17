@@ -92,7 +92,8 @@ object SyGuS14 {
     
 //  def symbol: Parser[String] = ( "[a-zA-Z]".r | specialChar ) ~ rep( "[a-zA-Z0-9]".r | specialChar ) ^^ { 
 //        case hd ~ tl => jeep.lang.Diag.println(hd ++ tl.mkString); hd ++ tl.mkString }
-  def symbol: Parser[String] = "[a-zA-Z_\\+\\−\\*&\\|\\!~<>=/%\\?\\.\\$\\^]([a-zA-Z0-9_\\+\\−\\*&\\|\\!~<>=/%\\?\\.\\$\\^])*".r
+  def symbol: Parser[String] = "[a-zA-Z_\\−\\+\\*&\\|\\!~<>=/%\\?\\.\\$\\^]([a-zA-Z0-9_\\+\\−\\*&\\|\\!~<>=/%\\?\\.\\$\\^])*".r | 
+  "-" // | "<=" | "=" | ">=" | "<"
 
     val boolean: Parser[Boolean] = "true" ^^^ { true } | "false" ^^^ { false }
 //    val genericGtermToken: Parser[String] = ( "+" | "-" | ">=" | "<=" | symbol ) ^^ { x => Diag.println(x); x } // FIXME
@@ -100,7 +101,7 @@ object SyGuS14 {
       // symbol // "[^ \t\r\n\f]".r // one or more non-whitespace 
       // symbol | wholeNumber | floatingPointNumber | boolean ^^ { x => x.toString } 
     // val genericGtermToken: Parser[String] = ( "Constant" | "Variable" | "InputVariable" | "LocalVariable" | "+" | "-" | ">=" | "<=" | symbol ) ^^ { x => Diag.println(x); x } // FIXME
-val genericGtermToken: Parser[String] = ( "Constant" | "Variable" | "InputVariable" | "LocalVariable" | symbol ) ^^ { x => Diag.println(x); x } // FIXME    
+val genericGtermToken: Parser[String] = "Constant" | "Variable" | "InputVariable" | "LocalVariable" | symbol    
 
 //    val specialChar = "_" | "+" | "-" | "*" | "&" | "|" | "!" | "~" | 
 //      "<" | ">" | "=" | "/" | "%" | "?" | "." | "$" | "^"
@@ -131,7 +132,7 @@ val genericGtermToken: Parser[String] = ( "Constant" | "Variable" | "InputVariab
       "(" ~ "Array" ~ sortExpr ~ sortExpr ~ ")" ^^ { 
         case _ ~ _ ~ se1 ~ se2 ~ _ => ArraySortExpr(se1,se2)
       } |
-      symbol ^^ { sym => jeep.lang.Diag.println(); SymbolSortExpr(sym) }    
+      symbol ^^ { sym => SymbolSortExpr(sym) }    
 
     /////////////////////////////////
 
@@ -147,12 +148,7 @@ val genericGtermToken: Parser[String] = ( "Constant" | "Variable" | "InputVariab
   
     def enumConst: Parser[EnumConst] = symbol ~ "::" ~ symbol ^^ { case a ~ _ ~ b => EnumConst(a,b) }
   
-    def literal: Parser[Literal] = intConst ^^ { x => jeep.lang.Diag.println(x);x } | 
-      realConst ^^ { x => jeep.lang.Diag.println(x);x }  | 
-      boolConst ^^ { x => jeep.lang.Diag.println(x);x }  | 
-      bvConst ^^ { x => jeep.lang.Diag.println(x);x }  | 
-      enumConst ^^ { x => jeep.lang.Diag.println(x);x }
-    //  | failure("not a literal") ) 
+    def literal: Parser[Literal] = intConst | realConst | boolConst | bvConst | enumConst 
   
     /////////////////////////////////
   
@@ -176,8 +172,7 @@ val genericGtermToken: Parser[String] = ( "Constant" | "Variable" | "InputVariab
   
     /////////////////////////////////
 
-    def compositeGTerm: Parser[CompositeGTerm] = "(" ~ ( symbol ^^ { x => jeep.lang.Diag.println(x);x } ) ~ 
-      rep(gterm) ~ ")" ^^ {
+    def compositeGTerm: Parser[CompositeGTerm] = "(" ~ symbol ~ rep(gterm) ~ ")" ^^ {
       case _ ~ sym ~ list ~ _ => CompositeGTerm(sym,list)
     }
     
@@ -197,24 +192,28 @@ val genericGtermToken: Parser[String] = ( "Constant" | "Variable" | "InputVariab
     }
   
     def gterm: Parser[GTerm] =  
-      compositeGTerm ^^ { x => jeep.lang.Diag.println(x);x } |      
-      literalGTerm ^^ { x => jeep.lang.Diag.println(x);x } |
-      letGTerm ^^ { x => jeep.lang.Diag.println(x);x } |    
-      symbolGTerm ^^ { x => jeep.lang.Diag.println(x);x } | 
-      genericGTerm ^^ { x => jeep.lang.Diag.println(x);x }
+      compositeGTerm |      
+      literalGTerm |
+      letGTerm |    
+      symbolGTerm | 
+      genericGTerm
     
-    val litChar: Parser[String] = "[a-zA-Z0-9]".r | "."
-    // val quotedLiteral: Parser[String] = "([a-zA-Z0-9.])+".r
 // QUOTEDLIT               "\""([a-z]|[A-Z]|{DIGIT}|".")+"\""
-    val quotedLiteral: Parser[String] = "\"" ~ rep1( litChar ) ~ "\"" ^^ { 
-      case _ ~ chars ~ _ => chars.mkString       
-    }
+    val quotedLiteral: Parser[String] = "\"[a-zA-Z0-9\\.]([a-zA-Z0-9\\.])*\"".r
 
-    def ntDef: Parser[NTDef] = "(" ~ ( symbol ^^ { x => jeep.lang.Diag.println(x);x } ) ~ 
-      ( sortExpr ^^ { x => jeep.lang.Diag.println(x);x } ) ~ 
-      ( rep1(gterm) ^^ { x => jeep.lang.Diag.println(x);x } ) ~ ")" ^^ {
-      case _ ~ sym ~ se ~ list ~ _ => jeep.lang.Diag.println(sym, se, list); NTDef(sym, se, list )     
+// NTDef : TK_LPAREN Symbol SortExpr TK_LPAREN GTermPlus TK_RPAREN TK_RPAREN
+    
+//    def ntDef: Parser[NTDef] = "(" ~ ( symbol ^^ { x => jeep.lang.Diag.println(x);x } ) ~ 
+//      ( sortExpr ^^ { x => jeep.lang.Diag.println(x);x } ) ~ 
+//      ( rep1(gterm) ^^ { x => jeep.lang.Diag.println(x);x } ) ~ ")" ^^ {
+//      case _ ~ sym ~ se ~ list ~ _ => jeep.lang.Diag.println(sym, se, list); NTDef(sym, se, list )     
+//    }
+    
+    def ntDef: Parser[NTDef] = "(" ~ symbol  ~ 
+      sortExpr ~ "(" ~ rep1(gterm) ~ ")" ~ ")" ^^ {
+      case _ ~ sym ~ se ~ _ ~ list ~ _ ~ _ => NTDef(sym, se, list )     
     }
+    
   
     /////////////////////////////////
   
@@ -226,7 +225,7 @@ val genericGtermToken: Parser[String] = ( "Constant" | "Variable" | "InputVariab
       case _ ~ sym ~ se ~ _ => SortDefCmd(sym,se) 
     }
   
-    def varDeclCmd: Parser[VarDeclCmd] = "(declare-var" ~ ( symbol ^^ { case x => jeep.lang.Diag.println( x ); x } ) ~ sortExpr ~ ")" ^^ { 
+    def varDeclCmd: Parser[VarDeclCmd] = "(declare-var" ~ symbol ~ sortExpr ~ ")" ^^ { 
       case _ ~ sym ~ se ~ _ => VarDeclCmd(sym,se) 
     } 
   
@@ -242,9 +241,9 @@ val genericGtermToken: Parser[String] = ( "Constant" | "Variable" | "InputVariab
     }
   
     def synthFunCmd: Parser[SynthFunCmd] = { 
-      def entry: Parser[(String,SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => jeep.lang.Diag.println((s,e)); (s,e) }    
-      "(synth-fun" ~ symbol ~ "(" ~ rep(entry) ~ ")" ~ ( sortExpr ^^ { x => jeep.lang.Diag.println(x);x }  ) ~ 
-      "(" ~ ( rep1(ntDef) ^^ { x => jeep.lang.Diag.println(x);x } ) ~ ")" ~ ")" ^^ {
+      def entry: Parser[(String,SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => (s,e) }    
+      "(synth-fun" ~ symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~ 
+      "(" ~ rep1(ntDef) ~ ")" ~ ")" ^^ {
         case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ ~ list2 ~ _ ~ _ => SynthFunCmd(sym,list,se,list2)
       }
     }
@@ -255,8 +254,8 @@ val genericGtermToken: Parser[String] = ( "Constant" | "Variable" | "InputVariab
   
     def setOptsCmd: Parser[SetOptsCmd] = {
       def entry: Parser[(String,String)] = "(" ~ symbol ~ quotedLiteral ~ ")" ^^ { case _ ~ s ~ q ~ _ => (s,q) }  
-      "(set-options" ~ "(" ~ rep1( entry ) ~ ")" ^^ {
-        case _ ~ _ ~ list ~ _ => SetOptsCmd( list )     
+      "(set-options" ~> "(" ~> rep1( entry ) <~ ")" <~ ")" ^^ {
+        case list => SetOptsCmd( list )     
       }
     }
   

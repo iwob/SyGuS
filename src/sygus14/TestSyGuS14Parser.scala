@@ -49,7 +49,7 @@ class TestSyGuS14Parser {
     val gterm1 = """
       (x y 0 1
         (ite StartBool Start Start)
-        (minus Start Start)          
+        (- Start Start)          
         (+ Start Start)
       )"""
     
@@ -58,23 +58,10 @@ class TestSyGuS14Parser {
         CompositeGTerm( "x",
           List(SymbolGTerm("y"), LiteralGTerm(IntConst(0)), LiteralGTerm(IntConst(1)), 
             CompositeGTerm("ite",List(SymbolGTerm("StartBool"), SymbolGTerm("Start"), SymbolGTerm("Start"))), 
-            CompositeGTerm("minus",List(SymbolGTerm("Start"), SymbolGTerm("Start"))), 
+            CompositeGTerm("-",List(SymbolGTerm("Start"), SymbolGTerm("Start"))), 
             CompositeGTerm("+",List(SymbolGTerm("Start"), SymbolGTerm("Start"))))
         )
       ), parser.validate(parser.gterm, gterm1 ) )    
-
-    val gterm2 = """
-    (
-        (and StartBool StartBool)
-        (or StartBool StartBool)
-        (not StartBool)
-        (le Start Start)
-        (eq Start Start)
-        (ge Start Start)
-    )"""
-
-    jeep.lang.Diag.println(parser.validate(parser.gterm, gterm2 ) )
-    assertTrue( parser.validate(parser.gterm, gterm2 ).isRight )
   }
   
   /////////////////////////////////
@@ -107,7 +94,7 @@ class TestSyGuS14Parser {
         (ge Start Start)
       )
     )"""
-jeep.lang.Diag.println(parser.validate(parser.ntDef, ntDef1 ) )
+// jeep.lang.Diag.println(parser.validate(parser.ntDef, ntDef1 ) )
     assertTrue( parser.validate(parser.ntDef, ntDef2 ).isRight )
   }
   
@@ -169,7 +156,6 @@ jeep.lang.Diag.println(parser.validate(parser.ntDef, ntDef1 ) )
       )
     )"""
     
-    jeep.lang.Diag.println(parser.parse(parser.synthFunCmd, synthFun2 ))
     assertTrue( parser.validate(parser.synthFunCmd, synthFun2 ).isRight )
   }
   
@@ -187,12 +173,10 @@ jeep.lang.Diag.println(parser.validate(parser.ntDef, ntDef1 ) )
     // jeep.lang.Diag.println(parser.validate(parser.cmd, "(constraint (>= (max2 x y) x))" ))
     assertTrue( parser.validate(parser.cmd, "(constraint (>= (max2 x y) x))" ).isRight )
     assertTrue( parser.validate(parser.cmd, "(constraint (or (= x (max2 x y)) (= y (max2 x y))))" ).isRight )
-    jeep.lang.Diag.println(parser.validate(parser.funDefCmd, "(define-fun iff ((a Bool) (b Bool)) Bool (not (xor a b)))" ) )    
-    jeep.lang.Diag.println(parser.validate(parser.cmd, "(define-fun iff ((a Bool) (b Bool)) Bool (not (xor a b)))" ) )
     assertTrue( parser.validate(parser.cmd, "(define-fun iff ((a Bool) (b Bool)) Bool (not (xor a b)))" ).isRight )
 
-    
-    
+    val setOpts = """(set-options ((samples "0")))"""
+    assertTrue( parser.validate(parser.setOptsCmd, setOpts ).isRight )    
         
 /****    
     def sortDefCmd: Parser[SortDefCmd] = "(define-sort" ~ symbol ~ sortExpr  ~ ")" ^^ { 
@@ -239,6 +223,7 @@ jeep.lang.Diag.println(parser.validate(parser.ntDef, ntDef1 ) )
           numParsed += 1
         }
         else {
+          jeep.lang.Diag.println(f)          
           jeep.lang.Diag.println(result)          
         }
       }
