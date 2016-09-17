@@ -164,38 +164,18 @@ class TestSyGuS14Parser {
     
     val parser = new Parser    
 
-    assertEquals( Right(SetLogicCmd("LIA")), parser.validate(parser.setLogicCmd, "(set-logic LIA)")  )    
+    assertEquals( Right(SetLogicCmd(SetLogicTheory.LIA)), parser.validate(parser.setLogicCmd, "(set-logic LIA)")  )    
     assertEquals( Right(CheckSynthCmd()), parser.validate(parser.cmd, "(check-synth)")  )
     
     assertEquals( Right(VarDeclCmd("x",IntSortExpr())), parser.validate(parser.varDeclCmd, "(declare-var x Int)")  )    
     assertEquals( Right(VarDeclCmd("x",IntSortExpr())), parser.validate(parser.cmd, "(declare-var x Int)")  )    
     
-    // jeep.lang.Diag.println(parser.validate(parser.cmd, "(constraint (>= (max2 x y) x))" ))
     assertTrue( parser.validate(parser.cmd, "(constraint (>= (max2 x y) x))" ).isRight )
     assertTrue( parser.validate(parser.cmd, "(constraint (or (= x (max2 x y)) (= y (max2 x y))))" ).isRight )
     assertTrue( parser.validate(parser.cmd, "(define-fun iff ((a Bool) (b Bool)) Bool (not (xor a b)))" ).isRight )
 
     val setOpts = """(set-options ((samples "0")))"""
     assertTrue( parser.validate(parser.setOptsCmd, setOpts ).isRight )    
-        
-/****    
-    def sortDefCmd: Parser[SortDefCmd] = "(define-sort" ~ symbol ~ sortExpr  ~ ")" ^^ { 
-      case _ ~ sym ~ se ~ _ => SortDefCmd(sym,se) }
-  
-    def funDeclCmd: Parser[FunDeclCmd] = "(declare-fun" ~ symbol ~ "(" ~ rep(sortExpr) ~ ")" ~ sortExpr ~ ")" ^^ {
-      case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ => FunDeclCmd(sym,list,se)
-    }
-
-    def funDefCmd: Parser[FunDefCmd] = {
-      def entry: Parser[(String,SortExpr)] = symbol ~ sortExpr ^^ { case s ~ e => (s,e) }    
-      "(define-fun" ~ symbol ~ "(" ~ rep( entry ) ~ ")" ~ sortExpr ~ term ~ ")" ^^ {
-        case _ ~ sym ~ _ ~ list ~ _ ~ se ~ t ~ _ => FunDefCmd(sym,list,se,t)
-      }
-    }
-  
-  
-    def setOptsCmd: Parser[SetOptsCmd] = {
-****/
   }
   
   /////////////////////////////////

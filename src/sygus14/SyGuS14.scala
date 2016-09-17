@@ -62,7 +62,7 @@ object SyGuS14 {
   
   /////////////////////////////////
 
-  case class SetLogicCmd(id: String)
+  case class SetLogicCmd(id: SetLogicTheory)
   
   sealed trait Cmd;
   case class SortDefCmd(sym: String, sortExpr: SortExpr) extends Cmd 
@@ -76,61 +76,37 @@ object SyGuS14 {
   
   /////////////////////////////////
   
+  case class SyGuSParserException(msg: String) extends RuntimeException(msg)
+  
   class Parser extends JavaTokenParsers {
 
-    // TODO: identifiers cannot be in this set 
     val reservedWords = Set( "set-logic", "define-sort", "declare-var", 
       "declare-fun", "define-fun", "synth-fun", "constraint", "check-synth", "set-options",
       "BitVec", "Array", "Int", "Bool", "Enum", "Real", "Constant", "Variable", "InputVariable", 
       "LocalVariable", "let", "true", "false" )  
     
-    // FIXME - which of these are regex characters that should be escaped?
-//    val specialChar = "[_\\+−\\*&\\|\\!~<>=/%\\?\\.\\$\\^]".r 
-//
-//  val symbolHd: Parser[String] = ( "[a-zA-Z]".r | specialChar )
-//  val symbolTl: Parser[String] = ( "[a-zA-Z0-9]".r | specialChar )  
-    
-//  def symbol: Parser[String] = ( "[a-zA-Z]".r | specialChar ) ~ rep( "[a-zA-Z0-9]".r | specialChar ) ^^ { 
-//        case hd ~ tl => jeep.lang.Diag.println(hd ++ tl.mkString); hd ++ tl.mkString }
-  def symbol: Parser[String] = "[a-zA-Z_\\−\\+\\*&\\|\\!~<>=/%\\?\\.\\$\\^]([a-zA-Z0-9_\\+\\−\\*&\\|\\!~<>=/%\\?\\.\\$\\^])*".r | 
-  "-" // | "<=" | "=" | ">=" | "<"
+    // FIXME - hack because escaping '-' in the regex doesn't seem to work       
+    def symbol = "-" | 
+      "[a-zA-Z_\\−\\+\\*&\\|\\!~<>=/%\\?\\.\\$\\^]([a-zA-Z0-9_\\+\\−\\*&\\|\\!~<>=/%\\?\\.\\$\\^])*".r ^^ {
+      case s => if( reservedWords.contains( s ) ) throw new SyGuSParserException(s"symbol expected, found reserved word: $s") else s      
+    }
 
     val boolean: Parser[Boolean] = "true" ^^^ { true } | "false" ^^^ { false }
-//    val genericGtermToken: Parser[String] = ( "+" | "-" | ">=" | "<=" | symbol ) ^^ { x => Diag.println(x); x } // FIXME
-    // """.*\S.*""".r
-      // symbol // "[^ \t\r\n\f]".r // one or more non-whitespace 
-      // symbol | wholeNumber | floatingPointNumber | boolean ^^ { x => x.toString } 
-    // val genericGtermToken: Parser[String] = ( "Constant" | "Variable" | "InputVariable" | "LocalVariable" | "+" | "-" | ">=" | "<=" | symbol ) ^^ { x => Diag.println(x); x } // FIXME
-val genericGtermToken: Parser[String] = "Constant" | "Variable" | "InputVariable" | "LocalVariable" | symbol    
+    val genericGtermToken: Parser[String] = "Constant" | "Variable" | "InputVariable" | "LocalVariable" | symbol    
 
-//    val specialChar = "_" | "+" | "-" | "*" | "&" | "|" | "!" | "~" | 
-//      "<" | ">" | "=" | "/" | "%" | "?" | "." | "$" | "^"
-    
-    // val symbolCC = "[a-zA-Z]".r |"_"|"+"|"-"|"*"|"&"|"|"|"!"|"~"|"<"|">"|"="|"/"|"%"|"?"|"."|"$"|"^"
-//    val symbolCC = "[a-zA-Z]".r | specialChar
-//    def symbol: Parser[String] = symbolCC ~ rep( symbolCC | "[0-9]".r ) ^^ { case hd ~ tl => hd ++ tl.mkString }
-      
-    // def symbol: Parser[String] = "[a-zA-Z_+−*&|!~<>=/%?.$^]([a-zA-Z0-9_+−*&|!~<>=/%?.$^])*".r
- // def symbol: Parser[String] = "[a-zA-Z_+−*<>=]([a-zA-Z0-9_+−*<>=])*".r
-  //   def symbol: Parser[String] = "[a-zA-Z_]([a-zA-Z0-9_])*".r // FIXME    
-  
-    def Cmd: Parser[SetLogicCmd] = "(set-logic" ~ symbol ~ ")" ^^ { 
-      case _ ~ sym ~ _ => SetLogicCmd(sym) 
-    }
-  
     /////////////////////////////////
 
-    def sortExpr: Parser[SortExpr] = "Int" ^^^ { IntSortExpr() } |
+    def sortExpr = "Int" ^^^ { IntSortExpr() } |
       "Bool" ^^^ { BoolSortExpr() } |
       "Real" ^^^ { RealSortExpr() } |
       "(" ~ "BitVec" ~ wholeNumber ~ ")" ^^ { 
         case _ ~ _ ~ i ~ _ => BitVecSortExpr(i.toInt) 
       } 
-      "(" ~ "Enum" ~ rep1(symbol) ~ ")" ^^ { 
-        case _ ~ _ ~ list ~ _ => EnumSortExpr(list)
+      "(" ~> "Enum" ~> rep1(symbol) <~ ")" ^^ { 
+        case list => EnumSortExpr(list)
       } |
-      "(" ~ "Array" ~ sortExpr ~ sortExpr ~ ")" ^^ { 
-        case _ ~ _ ~ se1 ~ se2 ~ _ => ArraySortExpr(se1,se2)
+      "(" ~> "Array" ~> sortExpr ~ sortExpr <~ ")" ^^ { 
+        case se1 ~ se2 => ArraySortExpr(se1,se2)
       } |
       symbol ^^ { sym => SymbolSortExpr(sym) }    
 
@@ -168,12 +144,12 @@ val genericGtermToken: Parser[String] = "Constant" | "Variable" | "InputVariable
     def literalTerm: Parser[LiteralTerm] = literal ^^ { x => LiteralTerm(x) }
     def symbolTerm: Parser[SymbolTerm] = symbol ^^ { x => SymbolTerm(x) }
   
-    def term: Parser[Term] = compositeTerm | literalTerm | symbolTerm | letTerm
+    def term: Parser[Term] = letTerm | compositeTerm | literalTerm | symbolTerm 
   
     /////////////////////////////////
 
-    def compositeGTerm: Parser[CompositeGTerm] = "(" ~ symbol ~ rep(gterm) ~ ")" ^^ {
-      case _ ~ sym ~ list ~ _ => CompositeGTerm(sym,list)
+    def compositeGTerm: Parser[CompositeGTerm] = "(" ~> symbol ~ rep(gterm) <~ ")" ^^ {
+      case sym ~ list => CompositeGTerm(sym,list)
     }
     
     def literalGTerm: Parser[LiteralGTerm] = literal ^^ { x => LiteralGTerm(x) }
@@ -182,51 +158,39 @@ val genericGtermToken: Parser[String] = "Constant" | "Variable" | "InputVariable
       def entry: Parser[(String,SortExpr,GTerm)] = "(" ~ symbol ~ sortExpr ~ gterm ~ ")" ^^ {
         case _ ~ a ~ b ~ c ~ _ => (a,b,c)         
       }
-      "(let" ~ "(" ~ rep1(entry) ~ ")" ~ gterm ~ ")" ^^ {
-        case _ ~ _ ~ list ~ _ ~ t ~ _ => LetGTerm(list,t) 
+      "(let" ~> "(" ~> rep1(entry) ~ ")" ~ gterm <~ ")" ^^ {
+        case list ~ _ ~ t => LetGTerm(list,t) 
       }
     }
     
-    def genericGTerm: Parser[GenericGTerm] = "(" ~ genericGtermToken ~ sortExpr ~ ")" ^^ {
-      case _ ~ tok ~ se ~ _ => GenericGTerm(tok,se)
+    def genericGTerm: Parser[GenericGTerm] = "(" ~> genericGtermToken ~ sortExpr <~ ")" ^^ {
+      case tok ~ se => GenericGTerm(tok,se)
     }
   
-    def gterm: Parser[GTerm] =  
-      compositeGTerm |      
-      literalGTerm |
-      letGTerm |    
-      symbolGTerm | 
-      genericGTerm
+    def gterm: Parser[GTerm] = letGTerm | compositeGTerm | literalGTerm | symbolGTerm | genericGTerm
     
-// QUOTEDLIT               "\""([a-z]|[A-Z]|{DIGIT}|".")+"\""
+    // QUOTEDLIT               "\""([a-z]|[A-Z]|{DIGIT}|".")+"\""
     val quotedLiteral: Parser[String] = "\"[a-zA-Z0-9\\.]([a-zA-Z0-9\\.])*\"".r
 
-// NTDef : TK_LPAREN Symbol SortExpr TK_LPAREN GTermPlus TK_RPAREN TK_RPAREN
+    // NTDef : TK_LPAREN Symbol SortExpr TK_LPAREN GTermPlus TK_RPAREN TK_RPAREN
     
-//    def ntDef: Parser[NTDef] = "(" ~ ( symbol ^^ { x => jeep.lang.Diag.println(x);x } ) ~ 
-//      ( sortExpr ^^ { x => jeep.lang.Diag.println(x);x } ) ~ 
-//      ( rep1(gterm) ^^ { x => jeep.lang.Diag.println(x);x } ) ~ ")" ^^ {
-//      case _ ~ sym ~ se ~ list ~ _ => jeep.lang.Diag.println(sym, se, list); NTDef(sym, se, list )     
-//    }
-    
-    def ntDef: Parser[NTDef] = "(" ~ symbol  ~ 
-      sortExpr ~ "(" ~ rep1(gterm) ~ ")" ~ ")" ^^ {
-      case _ ~ sym ~ se ~ _ ~ list ~ _ ~ _ => NTDef(sym, se, list )     
+    def ntDef: Parser[NTDef] = "(" ~> symbol  ~ 
+      sortExpr ~ "(" ~ rep1(gterm) <~ ")" <~ ")" ^^ {
+      case sym ~ se ~ _ ~ list => NTDef(sym, se, list )     
     }
-    
   
     /////////////////////////////////
   
-    def setLogicCmd: Parser[SetLogicCmd] = "(set-logic" ~ symbol ~ ")" ^^ { 
-      case _ ~ sym ~ _ => SetLogicCmd(sym) 
+    def setLogicCmd: Parser[SetLogicCmd] = "(set-logic" ~> symbol <~ ")" ^^ {
+      case sym => SetLogicCmd(Enum.valueOf(classOf[SetLogicTheory],sym)) 
     }
     
-    def sortDefCmd: Parser[SortDefCmd] = "(define-sort" ~ symbol ~ sortExpr  ~ ")" ^^ { 
-      case _ ~ sym ~ se ~ _ => SortDefCmd(sym,se) 
+    def sortDefCmd: Parser[SortDefCmd] = "(define-sort" ~> symbol ~ sortExpr  <~ ")" ^^ { 
+      case sym ~ se => SortDefCmd(sym,se) 
     }
   
-    def varDeclCmd: Parser[VarDeclCmd] = "(declare-var" ~ symbol ~ sortExpr ~ ")" ^^ { 
-      case _ ~ sym ~ se ~ _ => VarDeclCmd(sym,se) 
+    def varDeclCmd: Parser[VarDeclCmd] = "(declare-var" ~> symbol ~ sortExpr <~ ")" ^^ { 
+      case sym ~ se => VarDeclCmd(sym,se) 
     } 
   
     def funDeclCmd: Parser[FunDeclCmd] = "(declare-fun" ~ symbol ~ "(" ~ rep(sortExpr) ~ ")" ~ sortExpr ~ ")" ^^ {
