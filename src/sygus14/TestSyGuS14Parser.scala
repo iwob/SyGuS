@@ -20,20 +20,6 @@ class TestSyGuS14Parser {
   
   /////////////////////////////////
   
-  private def parseSyGuS14Text(str: String): Either[String,SyGuS14] = {
-    val lines = str.split("\\r\\n|\\n|\\r").filter { x => !x.trim.startsWith(";") || x.trim.isEmpty }
-    val text = lines.mkString("\n")
-    // jeep.lang.Diag.println(text)
-    val parser = new SyGuS14.Parser
-    
-    parser.parse(text)
-  }
-
-  private def parseSyGuS14File(f: File): Either[String,SyGuS14] =
-    parseSyGuS14Text(scala.io.Source.fromFile(f).mkString)
-  
-  /////////////////////////////////
-
   @Test
   def testSymbol: Unit = {
     val parser = new Parser    
@@ -183,7 +169,7 @@ class TestSyGuS14Parser {
   @Test
   def testExample: Unit = {
      val path = System.getProperty("user.dir") + "/resources/example.txt"
-     val pr = parseSyGuS14File(new java.io.File(path))
+     val pr = SyGuS14.parseSyGuS14File(new java.io.File(path))
      jeep.lang.Diag.println(pr)
      assertTrue( pr.isRight )
   }
@@ -198,7 +184,7 @@ class TestSyGuS14Parser {
     var numParsed = 0
     for( f <- files ) {
       try {
-        val result = parseSyGuS14File(f) 
+        val result = SyGuS14.parseSyGuS14File(f)
         if( result.isRight ) {
           numParsed += 1
         }
