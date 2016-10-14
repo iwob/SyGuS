@@ -5,6 +5,8 @@ import java.io._
 import org.junit._
 import org.junit.Assert._
 
+import sygus._
+
 class TestSyGuS14Parser {
 
   import SyGuS14._
@@ -102,7 +104,7 @@ class TestSyGuS14Parser {
       )
     )"""
     
-    assertTrue( parser.validate(parser.synthFunCmd, synthFunSyGuSCOMP2014HtmlExample5 ).isRight )    
+    assertTrue( parser.validate(parser.synthFunCmd14, synthFunSyGuSCOMP2014HtmlExample5 ).isRight )    
     
     // FIXME: can't parse <=,=,>= for some reason, subsituting leq etc    
     val synthFun1 = """
@@ -118,7 +120,7 @@ class TestSyGuS14Parser {
       )
     )"""
 
-    assertTrue( parser.validate(parser.synthFunCmd, synthFun1 ).isRight )
+    assertTrue( parser.validate(parser.synthFunCmd14, synthFun1 ).isRight )
     val synthFun2 = """
     (synth-fun max2 ((x Int) (y Int)) Int
       (
@@ -142,7 +144,7 @@ class TestSyGuS14Parser {
       )
     )"""
     
-    assertTrue( parser.validate(parser.synthFunCmd, synthFun2 ).isRight )
+    assertTrue( parser.validate(parser.synthFunCmd14, synthFun2 ).isRight )
   }
   
   @Test
@@ -151,14 +153,14 @@ class TestSyGuS14Parser {
     val parser = new Parser    
 
     assertEquals( Right(SetLogicCmd(SetLogicTheory.LIA)), parser.validate(parser.setLogicCmd, "(set-logic LIA)")  )    
-    assertEquals( Right(CheckSynthCmd()), parser.validate(parser.cmd, "(check-synth)")  )
+    assertEquals( Right(sygus.CheckSynthCmd()), parser.validate(parser.cmd14, "(check-synth)")  )
     
-    assertEquals( Right(VarDeclCmd("x",IntSortExpr())), parser.validate(parser.varDeclCmd, "(declare-var x Int)")  )    
-    assertEquals( Right(VarDeclCmd("x",IntSortExpr())), parser.validate(parser.cmd, "(declare-var x Int)")  )    
+    assertEquals( Right(sygus.VarDeclCmd("x",sygus.IntSortExpr())), parser.validate(parser.varDeclCmd, "(declare-var x Int)")  )    
+    assertEquals( Right(sygus.VarDeclCmd("x",sygus.IntSortExpr())), parser.validate(parser.cmd14, "(declare-var x Int)")  )    
     
-    assertTrue( parser.validate(parser.cmd, "(constraint (>= (max2 x y) x))" ).isRight )
-    assertTrue( parser.validate(parser.cmd, "(constraint (or (= x (max2 x y)) (= y (max2 x y))))" ).isRight )
-    assertTrue( parser.validate(parser.cmd, "(define-fun iff ((a Bool) (b Bool)) Bool (not (xor a b)))" ).isRight )
+    assertTrue( parser.validate(parser.cmd14, "(constraint (>= (max2 x y) x))" ).isRight )
+    assertTrue( parser.validate(parser.cmd14, "(constraint (or (= x (max2 x y)) (= y (max2 x y))))" ).isRight )
+    assertTrue( parser.validate(parser.cmd14, "(define-fun iff ((a Bool) (b Bool)) Bool (not (xor a b)))" ).isRight )
 
     val setOpts = """(set-options ((samples "0")))"""
     assertTrue( parser.validate(parser.setOptsCmd, setOpts ).isRight )    

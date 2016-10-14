@@ -1,5 +1,7 @@
 package sygus14
 
+import sygus._
+
 import scala.util.parsing.combinator._
 import java.io.File
 
@@ -7,7 +9,7 @@ import java.io.File
   * @see http://www.sygus.org/SyGuS-COMP2014.html
   */
 
-case class SyGuS14(setLogic: Option[SyGuS14.SetLogicCmd], cmds: List[SyGuS14.Cmd])
+case class SyGuS14(setLogic: Option[SyGuS14.SetLogicCmd], cmds: List[Cmd])
 
 ///////////////////////////////////
 
@@ -20,60 +22,7 @@ object SyGuS14 {
 
   /////////////////////////////////
 
-  sealed trait SortExpr
-  case class IntSortExpr() extends SortExpr
-  case class BoolSortExpr() extends SortExpr
-  case class RealSortExpr() extends SortExpr
-  case class BitVecSortExpr(n: Int) extends SortExpr {
-    require(n > 0)
-  }
-
-  case class EnumSortExpr(symbols: List[String]) extends SortExpr
-  case class ArraySortExpr(sortExpr1: SortExpr, sortExpr2: SortExpr) extends SortExpr
-  case class SymbolSortExpr(symbol: String) extends SortExpr
-
-  /////////////////////////////////
-
-  sealed trait Literal
-  case class IntConst(value: Int) extends Literal
-  case class RealConst(value: Double) extends Literal
-  case class BoolConst(value: Boolean) extends Literal
-  case class BVConst(value: List[Boolean]) extends Literal
-  case class EnumConst(sort: String, ctor: String) extends Literal
-
-  /////////////////////////////////
-
-  sealed trait Term
-  case class CompositeTerm(symbol: String, terms: List[Term]) extends Term
-  case class LiteralTerm(literal: Literal) extends Term
-  case class SymbolTerm(symbol: String) extends Term
-  case class LetTerm(list: List[(String, SortExpr, Term)], term: Term) extends Term
-
-  sealed trait GTerm
-  case class CompositeGTerm(symbol: String, terms: List[GTerm]) extends GTerm
-  case class LiteralGTerm(literal: Literal) extends GTerm
-  case class SymbolGTerm(symbol: String) extends GTerm
-  case class LetGTerm(list: List[(String, SortExpr, GTerm)], term: GTerm) extends GTerm
-  // Since we're not checking semantics at this point, GenericGTerm
-  // is used as a placeholder for the other GTerms of Section 3.6, i.e. 
-  // Constant, Variable, InputVariable LocalVariable 
-  case class GenericGTerm(identifier: String, sortExpr: SortExpr) extends GTerm
-
-  final case class NTDef(symbol: String, sortExpr: SortExpr, gterms: List[GTerm])
-
-  /////////////////////////////////
-
   case class SetLogicCmd(id: SetLogicTheory)
-
-  sealed trait Cmd;
-  case class SortDefCmd(sym: String, sortExpr: SortExpr) extends Cmd
-  case class VarDeclCmd(sym: String, sortExpr: SortExpr) extends Cmd
-  case class FunDeclCmd(sym: String, sortExprs: List[SortExpr], sortExpr: SortExpr) extends Cmd
-  case class FunDefCmd(sym: String, list: List[(String, SortExpr)], se: SortExpr, t: Term) extends Cmd
-  case class SynthFunCmd(sym: String, list: List[(String, SortExpr)], se: SortExpr, ntDefs: List[NTDef]) extends Cmd
-  case class ConstraintCmd(t: Term) extends Cmd
-  case class CheckSynthCmd() extends Cmd
-  case class SetOptsCmd(list: List[(String, String)]) extends Cmd
 
   /////////////////////////////////
 
@@ -205,11 +154,11 @@ object SyGuS14 {
       }
     }
 
-    def synthFunCmd: Parser[SynthFunCmd] = {
+    def synthFunCmd14: Parser[SynthFunCmd14] = {
       def entry: Parser[(String, SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => (s, e) }
       "(synth-fun" ~ symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~
         "(" ~ rep1(ntDef) ~ ")" ~ ")" ^^ {
-          case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ ~ list2 ~ _ ~ _ => SynthFunCmd(sym, list, se, list2)
+          case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ ~ list2 ~ _ ~ _ => SynthFunCmd14(sym, list, se, list2)
         }
     }
 
@@ -225,12 +174,12 @@ object SyGuS14 {
       }
     }
 
-    def cmd: Parser[Cmd] = sortDefCmd | varDeclCmd | funDeclCmd | funDefCmd |
-      synthFunCmd | constraintCmd | checkSynthCmd | setOptsCmd /* | failure("not a cmd") */
+    def cmd14: Parser[Cmd] = sortDefCmd | varDeclCmd | funDeclCmd | funDefCmd |
+      synthFunCmd14 | constraintCmd | checkSynthCmd | setOptsCmd /* | failure("not a cmd") */
 
     ///////////////////////////////////
 
-    def syGuS14: Parser[SyGuS14] = opt(setLogicCmd) ~ rep1(cmd) ^^ {
+    def syGuS14: Parser[SyGuS14] = opt(setLogicCmd) ~ rep1(cmd14) ^^ {
       case slc ~ cmds => SyGuS14(slc, cmds)
     }
 
