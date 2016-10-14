@@ -38,7 +38,7 @@ class TestSyGuS16Parser {
   }
 
   /////////////////////////////////
-  
+
   @Test
   def testParser: Unit = {
     val root = System.getProperty("user.dir") + "/resources/sygus16"
