@@ -27,7 +27,10 @@ class TestSyGuS14Parser {
     val parser = new Parser    
     assertEquals( Right("<="), parser.validate(parser.symbol, "<=")  )    
     assertEquals( Right("a0"), parser.validate(parser.symbol, "a0")  ) 
-    assertEquals( Right("x"), parser.validate(parser.symbol, "x")  )     
+    assertEquals( Right("x"), parser.validate(parser.symbol, "x")  )  
+    assertEquals( Right("-"), parser.validate(parser.symbol, "-")  )
+    assertEquals( Right("+"), parser.validate(parser.symbol, "+")  )    
+    assertEquals( Right("one-times"), parser.validate(parser.symbol, "one-times")  )
   }
 
   @Test

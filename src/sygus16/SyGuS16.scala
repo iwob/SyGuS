@@ -18,13 +18,14 @@ object SyGuS16 {
   
     private def synthFunCmd16: Parser[SynthFunCmd16] = {
       def entry: Parser[(String, SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => (s, e) }
-      "(synth-fun" ~ symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~ ")" ^^ {
-          case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ => SynthFunCmd16(sym, list, se)
+      "(" ~> "synth-fun" ~> symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~ ")" ^^ {
+          case sym ~ _ ~ list ~ _ ~ se ~ _ => SynthFunCmd16(sym, list, se)
         }
     }
     
-    def cmd16: Parser[Cmd] = sortDefCmd | varDeclCmd | funDeclCmd | funDefCmd |
-      synthFunCmd14 | synthFunCmd16 | constraintCmd | checkSynthCmd | setOptsCmd
+    def cmd16: Parser[Cmd] = ( sortDefCmd | varDeclCmd | funDeclCmd | funDefCmd |
+      synthFunCmd14 | synthFunCmd16 | constraintCmd | checkSynthCmd | setOptsCmd ) 
+      // ^^ { case x => jeep.lang.Diag.println( x ); x }
 
     ///////////////////////////////////
 

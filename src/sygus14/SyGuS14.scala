@@ -35,11 +35,9 @@ object SyGuS14 {
       "BitVec", "Array", "Int", "Bool", "Enum", "Real", "Constant", "Variable", "InputVariable",
       "LocalVariable", "let", "true", "false")
 
-    // FIXME - hack because escaping '-' in the regex doesn't seem to work       
-    def symbol = "-" |
-      "[a-zA-Z_\\−\\+\\*&\\|\\!~<>=/%\\?\\.\\$\\^]([a-zA-Z0-9_\\+\\−\\*&\\|\\!~<>=/%\\?\\.\\$\\^])*".r ^^ {
-        case s => if (reservedWords.contains(s)) throw new SyGuSParserException(s"symbol expected, found reserved word: $s") else s
-      }
+    def symbol =  """[a-zA-Z\-[_\+\*&\|\!~<>=/%\?\.\$\^]]([a-zA-Z0-9\-[_\+\*&\|\!~<>=/%\?\.\$\^]])*""".r ^^ {    
+      case s => if (reservedWords.contains(s)) throw new SyGuSParserException(s"symbol expected, found reserved word: $s") else s
+    }
 
     val boolean: Parser[Boolean] = "true" ^^^ { true } | "false" ^^^ { false }
     val genericGtermToken: Parser[String] = "Constant" | "Variable" | "InputVariable" | "LocalVariable" | symbol
@@ -82,8 +80,8 @@ object SyGuS14 {
       def entry: Parser[(String, SortExpr, Term)] = "(" ~ symbol ~ sortExpr ~ term ~ ")" ^^ {
         case _ ~ a ~ b ~ c ~ _ => (a, b, c)
       }
-      "(let" ~ "(" ~ rep1(entry) ~ ")" ~ term ~ ")" ^^ {
-        case _ ~ _ ~ list ~ _ ~ t ~ _ => LetTerm(list, t)
+      "(" ~> "let" ~ "(" ~ rep1(entry) ~ ")" ~ term ~ ")" ^^ {
+        case _ ~ list ~ _ ~ t ~ _ => LetTerm(list, t)
       }
     }
 
@@ -108,7 +106,7 @@ object SyGuS14 {
       def entry: Parser[(String, SortExpr, GTerm)] = "(" ~ symbol ~ sortExpr ~ gterm ~ ")" ^^ {
         case _ ~ a ~ b ~ c ~ _ => (a, b, c)
       }
-      "(let" ~> "(" ~> rep1(entry) ~ ")" ~ gterm <~ ")" ^^ {
+      "(" ~> "let" ~> "(" ~> rep1(entry) ~ ")" ~ gterm <~ ")" ^^ {
         case list ~ _ ~ t => LetGTerm(list, t)
       }
     }
@@ -131,45 +129,46 @@ object SyGuS14 {
 
     /////////////////////////////////
 
-    def setLogicCmd: Parser[SetLogicCmd] = "(set-logic" ~> symbol <~ ")" ^^ {
+    def setLogicCmd: Parser[SetLogicCmd] = "(" ~> "set-logic" ~> symbol <~ ")" ^^ {
       case sym => SetLogicCmd(Enum.valueOf(classOf[SetLogicTheory], sym))
     }
 
-    def sortDefCmd: Parser[SortDefCmd] = "(define-sort" ~> symbol ~ sortExpr <~ ")" ^^ {
+    def sortDefCmd: Parser[SortDefCmd] = "(" ~> "define-sort" ~> symbol ~ sortExpr <~ ")" ^^ {
       case sym ~ se => SortDefCmd(sym, se)
     }
 
-    def varDeclCmd: Parser[VarDeclCmd] = "(declare-var" ~> symbol ~ sortExpr <~ ")" ^^ {
+    def varDeclCmd: Parser[VarDeclCmd] = "(" ~> "declare-var" ~> symbol ~ sortExpr <~ ")" ^^ {
       case sym ~ se => VarDeclCmd(sym, se)
     }
 
-    def funDeclCmd: Parser[FunDeclCmd] = "(declare-fun" ~ symbol ~ "(" ~ rep(sortExpr) ~ ")" ~ sortExpr ~ ")" ^^ {
+    def funDeclCmd: Parser[FunDeclCmd] = "(" ~> "declare-fun" ~ symbol ~ "(" ~ rep(sortExpr) ~ ")" ~ sortExpr ~ ")" ^^ {
       case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ => FunDeclCmd(sym, list, se)
     }
 
     def funDefCmd: Parser[FunDefCmd] = {
       def entry: Parser[(String, SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => (s, e) }
-      "(define-fun" ~ symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~ term ~ ")" ^^ {
-        case _ ~ sym ~ _ ~ list ~ _ ~ se ~ t ~ _ => FunDefCmd(sym, list, se, t)
+      "(" ~> "define-fun" ~> symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~ term ~ ")" ^^ {
+        case sym ~ _ ~ list ~ _ ~ se ~ t ~ _ => FunDefCmd(sym, list, se, t)
       }
     }
 
     def synthFunCmd14: Parser[SynthFunCmd14] = {
       def entry: Parser[(String, SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => (s, e) }
-      "(synth-fun" ~ symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~
+      "(" ~> "synth-fun" ~> symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~
         "(" ~ rep1(ntDef) ~ ")" ~ ")" ^^ {
-          case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ ~ list2 ~ _ ~ _ => SynthFunCmd14(sym, list, se, list2)
+          case sym ~ _ ~ list ~ _ ~ se ~ _ ~ list2 ~ _ ~ _ => SynthFunCmd14(sym, list, se, list2)
         }
     }
 
-    def constraintCmd: Parser[ConstraintCmd] = "(constraint" ~ term ~ ")" ^^ {
-      case _ ~ t ~ _ => ConstraintCmd(t)
+    def constraintCmd: Parser[ConstraintCmd] = "(" ~> "constraint" ~> term <~ ")" ^^ {
+      ConstraintCmd(_)
     }
-    def checkSynthCmd: Parser[CheckSynthCmd] = "(check-synth)" ^^^ { CheckSynthCmd() }
+    
+    def checkSynthCmd: Parser[CheckSynthCmd] = "(" ~> "check-synth" <~ ")" ^^^ { CheckSynthCmd() }
 
     def setOptsCmd: Parser[SetOptsCmd] = {
       def entry: Parser[(String, String)] = "(" ~ symbol ~ quotedLiteral ~ ")" ^^ { case _ ~ s ~ q ~ _ => (s, q) }
-      "(set-options" ~> "(" ~> rep1(entry) <~ ")" <~ ")" ^^ {
+      "(" ~> "set-options" ~> "(" ~> rep1(entry) <~ ")" <~ ")" ^^ {
         case list => SetOptsCmd(list)
       }
     }
