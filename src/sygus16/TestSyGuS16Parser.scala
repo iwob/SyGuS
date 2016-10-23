@@ -88,33 +88,63 @@ class TestSyGuS16Parser {
   
   /////////////////////////////////
 
-  @Test
-  def testParser: Unit = {
-    val root = System.getProperty("user.dir") + "/resources/sygus16"
-    val files = getRecursiveListOfFiles(new File( root ) )
+  
+  def testParserImpl(rootDir: File): Unit = {
+    // val root = System.getProperty("user.dir") + "/resources/sygus14"
+    val files = getRecursiveListOfFiles(rootDir)
 
+    var bag = Map.empty[String,Int]
+    def add(x: Map[String,Int], s: String): Map[String,Int] =
+      x + ( s -> ( 1 + x.get(s).getOrElse(0) ) )
+    
+    ///////////////////////////////    
+    
     var numParsed = 0
+    val progress = new jeep.util.ProgressDisplay( files.length )
     for( f <- files ) {
       try {
         val result = SyGuS16.parseSyGuS16File(f)
-        if( result.isRight ) {
-          numParsed += 1
-        }
-        else {
-          jeep.lang.Diag.println(f)          
-          jeep.lang.Diag.println(result)          
+        result match {
+          case Right(_) =>  numParsed += 1 
+          case Left(errorMsg) => {           
+            bag = add(bag,errorMsg)
+            // jeep.lang.Diag.println(f)          
+            // jeep.lang.Diag.println(result)
+          }
         }
       }
       catch {
         case ex: Throwable => {
-          jeep.lang.Diag.println(f)
-          jeep.lang.Diag.println( ex.getMessage )
+            bag = add(bag,ex.getMessage)          
+//          jeep.lang.Diag.println(f)
+//          jeep.lang.Diag.println( ex.getMessage )
         }
       }
+      
+      progress.increment()
     }
+    
+    ///////////////////////////////
+    
+    if( !bag.isEmpty )
+      jeep.lang.Diag.println(s"errors: ${bag.mkString("\n")}")
+      
     jeep.lang.Diag.println(s"files: ${files.length}, succesfully parsed: $numParsed")
     assertEquals( files.length, numParsed )
   }
+
+  @Test
+  def testParser: Unit = {
+    {
+      val root = System.getProperty("user.dir") + "/resources/sygus16"
+      testParserImpl(new File(root))
+    }
+    {
+      val root = System.getProperty("user.dir") + "/resources/sygus16new"
+      testParserImpl(new File(root))
+    }
+  }
+  
 }
 
 // End ///////////////////////////////////////////////////////////////

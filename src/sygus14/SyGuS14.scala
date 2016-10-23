@@ -36,7 +36,9 @@ object SyGuS14 {
       "LocalVariable", "let", "true", "false")
 
     def symbol =  """[a-zA-Z\-[_\+\*&\|\!~<>=/%\?\.\$\^]]([a-zA-Z0-9\-[_\+\*&\|\!~<>=/%\?\.\$\^]])*""".r ^^ {    
-      case s => if (reservedWords.contains(s)) throw new SyGuSParserException(s"symbol expected, found reserved word: $s") else s
+      case s => if (reservedWords.contains(s)) 
+        throw new SyGuSParserException(s"symbol expected, found reserved word: $s") 
+      else s
     }
 
     val boolean: Parser[Boolean] = "true" ^^^ { true } | "false" ^^^ { false }

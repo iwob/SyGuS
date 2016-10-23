@@ -180,7 +180,7 @@ class TestSyGuS14Parser {
   }
 
   /////////////////////////////////
-  
+
   @Test
   def testParser: Unit = {
     val root = System.getProperty("user.dir") + "/resources/sygus14"
