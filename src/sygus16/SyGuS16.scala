@@ -16,6 +16,22 @@ object SyGuS16 {
   
   class Parser extends sygus14.SyGuS14.Parser {
   
+    override def sortExpr = 
+      "String" ^^^ { StringSortExpr() } |      
+      "Int" ^^^ { IntSortExpr() } |
+      "Bool" ^^^ { BoolSortExpr() } |
+      "Real" ^^^ { RealSortExpr() } |
+      "(" ~ "BitVec" ~ wholeNumber ~ ")" ^^ {
+        case _ ~ _ ~ i ~ _ => BitVecSortExpr(i.toInt)
+      }
+    "(" ~> "Enum" ~> rep1(symbol) <~ ")" ^^ {
+      case list => EnumSortExpr(list)
+    } |
+      "(" ~> "Array" ~> sortExpr ~ sortExpr <~ ")" ^^ {
+        case se1 ~ se2 => ArraySortExpr(se1, se2)
+      } |
+      symbol ^^ { sym => SymbolSortExpr(sym) }
+    
     private def synthFunCmd16: Parser[SynthFunCmd16] = {
       def entry: Parser[(String, SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => (s, e) }
       "(" ~> "synth-fun" ~> symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~ ")" ^^ {
@@ -24,7 +40,7 @@ object SyGuS16 {
     }
     
     def cmd16: Parser[Cmd] = ( sortDefCmd | varDeclCmd | funDeclCmd | funDefCmd |
-      synthFunCmd14 | synthFunCmd16 | constraintCmd | checkSynthCmd | setOptsCmd ) 
+      synthFunCmd16 | synthFunCmd14 | constraintCmd | checkSynthCmd | setOptsCmd ) 
       // ^^ { case x => jeep.lang.Diag.println( x ); x }
 
     ///////////////////////////////////
@@ -32,6 +48,7 @@ object SyGuS16 {
     def syGuS16: Parser[SyGuS16] = opt(setLogicCmd) ~ rep1(cmd16) ^^ {
       case slc ~ cmds => SyGuS16(slc, cmds)
     }
+    
     ///////////////////////////////////
 
     override def validate[T](parser: Parser[T], expr: String): Either[String, T] = {

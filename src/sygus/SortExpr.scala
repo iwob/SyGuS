@@ -12,4 +12,7 @@ case class EnumSortExpr(symbols: List[String]) extends SortExpr
 case class ArraySortExpr(sortExpr1: SortExpr, sortExpr2: SortExpr) extends SortExpr
 case class SymbolSortExpr(symbol: String) extends SortExpr
 
+// SuGuS16:
+case class StringSortExpr() extends SortExpr
+
   // End /////////////////////////////////////////////////////////////

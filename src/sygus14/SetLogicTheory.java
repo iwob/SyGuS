@@ -1,6 +1,6 @@
 package sygus14;
 
-enum SetLogicTheory { LIA, BV, Reals, Arrays }
+enum SetLogicTheory { LIA, BV, Reals, Arrays, SLIA }
 
 // End ///////////////////////////////////////////////////////////////
 
