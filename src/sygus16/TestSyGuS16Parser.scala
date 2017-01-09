@@ -99,6 +99,8 @@ class TestSyGuS16Parser {
     
     ///////////////////////////////    
     
+    var mapErrorToFiles = Map.empty[String,List[File]]
+      
     var numParsed = 0
     val progress = new jeep.util.ProgressDisplay( files.length )
     for( f <- files ) {
@@ -110,6 +112,7 @@ class TestSyGuS16Parser {
             bag = add(bag,errorMsg)
             // jeep.lang.Diag.println(f)          
             // jeep.lang.Diag.println(result)
+            mapErrorToFiles = mapErrorToFiles.updated(errorMsg, mapErrorToFiles.getOrElse(errorMsg, Nil) :+ f )
           }
         }
       }
@@ -126,8 +129,10 @@ class TestSyGuS16Parser {
     
     ///////////////////////////////
     
-    if( !bag.isEmpty )
+    if( !bag.isEmpty ) {
       jeep.lang.Diag.println(s"errors: ${bag.mkString("\n")}")
+      jeep.lang.Diag.println(s"mapErrorToFiles" )
+    }
       
     jeep.lang.Diag.println(s"files: ${files.length}, succesfully parsed: $numParsed")
     assertEquals( files.length, numParsed )
@@ -144,7 +149,12 @@ class TestSyGuS16Parser {
       testParserImpl(new File(root))
     }
   }
-  
+
+  @Test
+  def testPBEStrings: Unit = {
+    val root = System.getProperty("user.dir") + "/resources/sygus16new/PBE_Strings"
+    testParserImpl(new File(root))
+  }
 }
 
 // End ///////////////////////////////////////////////////////////////
