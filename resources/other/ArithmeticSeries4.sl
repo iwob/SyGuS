@@ -1,7 +1,6 @@
 (set-logic LIA)
 
-
-(synth-fun sortedascending4 ((a Int) (b Int) (c Int) (d Int)) Int
+(synth-fun arithmeticseries4 ((a Int) (b Int) (c Int) (d Int)) Int
 
 ((Start Int (a b c d 0 1
     (+ Start Start)
@@ -20,7 +19,9 @@
 (declare-var b Int)
 (declare-var c Int)
 (declare-var d Int)
-      
-(constraint (=> (and (<= a b) (and (<= b c) (<= c d))) (= (sortedascending4 a b c d) 1)))
-(constraint (=> (not (and (<= a b) (and (<= b c) (<= c d)))) (= (sortedascending4 a b c d) 0)))           
+
+(constraint (=> (and (= (- b a) (- c b)) (= (- c b) (- d c)) )
+                (= (arithmeticseries4 a b c d) 1)))
+(constraint (=> (not (and (= (- b a) (- c b)) (= (- c b) (- d c)) ))
+                (= (arithmeticseries4 a b c d) 0)))
 (check-synth)

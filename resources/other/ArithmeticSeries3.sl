@@ -19,8 +19,6 @@
 (declare-var b Int)
 (declare-var c Int)
       
-(constraint (=> (and (= (- b a) (- c b)) (and (= (- b a) (- d c) ))) (= (arithmeticseries3 a b c) 1)))
-(constraint (=> (and (not (= (- b a) (- c b))) (and (= (- b a) (- d c) ))) (= (arithmeticseries3 a b c) 0)))
-(constraint (=> (and (= (- b a) (- c b)) (and (not (= (- b a) (- d c) )))) (= (arithmeticseries3 a b c) 0)))
-(constraint (=> (and (not (= (- b a) (- c b))) (and (not (= (- b a) (- d c) )))) (= (arithmeticseries3 a b c) 0)))      
+(constraint (=> (= (- b a) (- c b)) (= (arithmeticseries3 a b c) 1)))
+(constraint (=> (not (= (- b a) (- c b))) (= (arithmeticseries3 a b c) 0)))
 (check-synth)
