@@ -1,6 +1,6 @@
 package sygus
 
-sealed trait Cmd;
+sealed trait Cmd
 case class SortDefCmd(sym: String, sortExpr: SortExpr) extends Cmd
 case class VarDeclCmd(sym: String, sortExpr: SortExpr) extends Cmd
 case class FunDeclCmd(sym: String, sortExprs: List[SortExpr], sortExpr: SortExpr) extends Cmd
