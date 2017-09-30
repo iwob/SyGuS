@@ -33,7 +33,7 @@ object SyGuS14 {
     val reservedWords = Set("set-logic", "define-sort", "declare-var",
       "declare-fun", "define-fun", "synth-fun", "constraint", "check-synth", "set-options",
       "BitVec", "Array", "Int", "Bool", "Enum", "Real", "Constant", "Variable", "InputVariable",
-      "LocalVariable", "let", "true", "false")
+      "LocalVariable", "let", "true", "false", "forall", "exists")
 
     def symbol =  """[a-zA-Z\-[_\+\*&\|\!~<>=/%\?\.\$\^]]([a-zA-Z0-9\-[_\+\*&\|\!~<>=/%\?\.\$\^]])*""".r ^^ {    
       case s => if (reservedWords.contains(s)) 
