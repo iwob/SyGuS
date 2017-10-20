@@ -57,7 +57,7 @@ object SyGuS16 {
     override def validate[T](parser: Parser[T], expr: String): Either[String, T] = {
       parseAll(phrase(parser), expr) match {
         // parseAll(parser, expr) match {      
-        case m @ Failure(msg, next) => Left(s"Parse failure: $msg")
+        case m @ Failure(msg, next) => Left(s"Parse failure: $msg, ${next.source}")
         case m @ Error(msg, next)   => Left(s"Parse error: $msg")
         case Success(result, next)  => Right(result)
       }

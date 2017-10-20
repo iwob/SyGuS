@@ -110,18 +110,12 @@ class TestSyGuS16Parser {
           case Right(_) =>  numParsed += 1 
           case Left(errorMsg) => {           
             bag = add(bag,errorMsg)
-            // jeep.lang.Diag.println(f)          
-            // jeep.lang.Diag.println(result)
             mapErrorToFiles = mapErrorToFiles.updated(errorMsg, mapErrorToFiles.getOrElse(errorMsg, Nil) :+ f )
           }
         }
       }
       catch {
-        case ex: Throwable => {
-            bag = add(bag,ex.getMessage)          
-//          jeep.lang.Diag.println(f)
-//          jeep.lang.Diag.println( ex.getMessage )
-        }
+        case ex: Throwable => bag = add(bag,ex.getMessage)          
       }
       
       progress.increment()
