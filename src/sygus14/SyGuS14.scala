@@ -35,7 +35,7 @@ object SyGuS14 {
       "BitVec", "Array", "Int", "Bool", "Enum", "Real", "Constant", "Variable", "InputVariable",
       "LocalVariable", "let", "true", "false", "forall", "exists")
 
-    def guardedSymbol: Parser[String] = "|" ~> ".*".r <~ "|" ^^ { s => s"|$s|" }
+    def guardedSymbol: Parser[String] = "|.*|".r ^^ { s => s }
 
     def symbol = (guardedSymbol | """[a-zA-Z\-[_\+\*&\|\!~<>=/%\?\.\$\^]]([a-zA-Z0-9\-[_\+\*&\|\!~<>=/%\?\.\$\^]])*""".r) ^^ {
       case s => if (reservedWords.contains(s)) 
