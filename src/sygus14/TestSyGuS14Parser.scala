@@ -32,6 +32,7 @@ class TestSyGuS14Parser {
     assertEquals( Right("+"), parser.validate(parser.symbol, "+")  )    
     assertEquals( Right("one-times"), parser.validate(parser.symbol, "one-times")  )
     assertEquals( Right("|s|"), parser.validate(parser.symbol, "|s|")  )    
+    assertEquals( Right("|s''|"), parser.validate(parser.symbol, "|s''|")  )
   }
   
   @Test
@@ -181,6 +182,9 @@ class TestSyGuS14Parser {
 
     assertTrue( parser.validate(parser.cmd14, 
       "(constraint (forall ((i Int)) (> (synthFun x i) (synthFun x (+ i 1))) ))" ).isRight )
+
+    assertTrue( parser.validate(parser.cmd14,
+      "(constraint (= (str.len (f |s''| a b)) (str.len |s''|)))" ).isRight )
     
     val setOpts = """(set-options ((samples "0")))"""
     assertTrue( parser.validate(parser.setOptsCmd, setOpts ).isRight )    
