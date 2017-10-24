@@ -31,6 +31,20 @@ class TestSyGuS14Parser {
     assertEquals( Right("-"), parser.validate(parser.symbol, "-")  )
     assertEquals( Right("+"), parser.validate(parser.symbol, "+")  )    
     assertEquals( Right("one-times"), parser.validate(parser.symbol, "one-times")  )
+    assertEquals( Right("|s|"), parser.validate(parser.symbol, "|s|")  )    
+  }
+  
+  @Test
+  def testTerm: Unit = {
+    
+    val parser = new Parser
+  
+    val term = "(>= (max2 x y) x)"
+    assertEquals( Right(CompositeTerm(">=",List(CompositeTerm("max2",List(SymbolTerm("x"), SymbolTerm("y"))), SymbolTerm("x")))), 
+      parser.validate(parser.term, term ) )
+      
+    assertTrue( parser.validate(parser.forallTerm, 
+      "(forall ((i Int)) (> (synthFun x i) (synthFun x (+ i 1))) )" ).isRight )
   }
 
   @Test
@@ -165,10 +179,13 @@ class TestSyGuS14Parser {
     assertTrue( parser.validate(parser.cmd14, "(constraint (or (= x (max2 x y)) (= y (max2 x y))))" ).isRight )
     assertTrue( parser.validate(parser.cmd14, "(define-fun iff ((a Bool) (b Bool)) Bool (not (xor a b)))" ).isRight )
 
+    assertTrue( parser.validate(parser.cmd14, 
+      "(constraint (forall ((i Int)) (> (synthFun x i) (synthFun x (+ i 1))) ))" ).isRight )
+    
     val setOpts = """(set-options ((samples "0")))"""
     assertTrue( parser.validate(parser.setOptsCmd, setOpts ).isRight )    
   }
-  
+
   /////////////////////////////////
 
   @Test

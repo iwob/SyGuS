@@ -33,11 +33,16 @@ object SyGuS14 {
     val reservedWords = Set("set-logic", "define-sort", "declare-var",
       "declare-fun", "define-fun", "synth-fun", "constraint", "check-synth", "set-options",
       "BitVec", "Array", "Int", "Bool", "Enum", "Real", "Constant", "Variable", "InputVariable",
-      "LocalVariable", "let", "true", "false", "forall", "exists")
+      "LocalVariable", "let", "true", "false" 
+      // , "forall", "exists"
+      )
 
-    def guardedSymbol: Parser[String] = "|.+|".r ^^ { s => s }
+    val unguardedSymbolRegex = """[a-zA-Z\-[_\+\*&\|\!~<>=/%\?\.\$\^]]([a-zA-Z0-9\-[_\+\*&\|\!~<>=/%\?\.\$\^]])*""".r
+    val guardedSymbolRegex = """[a-zA-Z\-[_\+\*&\!~<>=/%\?\.\$\^]]([a-zA-Z0-9\-[_\+\*&\!~<>=/%\?\.\$\^]])*""".r    
 
-    def symbol = (guardedSymbol | """[a-zA-Z\-[_\+\*&\|\!~<>=/%\?\.\$\^]]([a-zA-Z0-9\-[_\+\*&\|\!~<>=/%\?\.\$\^]])*""".r) ^^ {
+    val guardedSymbol: Parser[String] = "|" ~ guardedSymbolRegex ~ "|" ^^ { case _ ~ s ~ _ => s"|$s|" }
+    
+    val symbol = (guardedSymbol | unguardedSymbolRegex ) ^^ {
       case s => if (reservedWords.contains(s)) 
         throw new SyGuSParserException(s"symbol expected, found reserved word: $s") 
       else s
@@ -95,8 +100,18 @@ object SyGuS14 {
 
     def literalTerm: Parser[LiteralTerm] = literal ^^ { x => LiteralTerm(x) }
     def symbolTerm: Parser[SymbolTerm] = symbol ^^ { x => SymbolTerm(x) }
+    
+    def forallTerm: Parser[ForallTerm] = "(" ~> "forall" ~> "(" ~> 
+      rep(symbolAndSortExpr) ~ ")" ~ term <~ ")" ^^ { case sorts ~ _ ~ term  => 
+      ForallTerm(sorts,term)
+    }
+      
+    def existsTerm: Parser[ExistsTerm] = "(" ~> "exists" ~> "(" ~> 
+      rep(symbolAndSortExpr) ~ ")" ~ term <~ ")" ^^ { case sorts ~ _ ~ term  => 
+      ExistsTerm(sorts,term)
+    }
 
-    def term: Parser[Term] = letTerm | compositeTerm | literalTerm | symbolTerm
+    def term: Parser[Term] = forallTerm | existsTerm | letTerm | compositeTerm | literalTerm | symbolTerm
 
     /////////////////////////////////
 
@@ -156,9 +171,10 @@ object SyGuS14 {
       }
     }
 
+    def symbolAndSortExpr: Parser[(String, SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => (s, e) }
+      
     def synthFunCmd14: Parser[SynthFunCmd14] = {
-      def entry: Parser[(String, SortExpr)] = "(" ~ symbol ~ sortExpr ~ ")" ^^ { case _ ~ s ~ e ~ _ => (s, e) }
-      "(" ~> "synth-fun" ~> symbol ~ "(" ~ rep(entry) ~ ")" ~ sortExpr ~
+      "(" ~> "synth-fun" ~> symbol ~ "(" ~ rep(symbolAndSortExpr) ~ ")" ~ sortExpr ~
         "(" ~ rep1(ntDef) ~ ")" ~ ")" ^^ {
           case sym ~ _ ~ list ~ _ ~ se ~ _ ~ list2 ~ _ ~ _ => SynthFunCmd14(sym, list, se, list2)
         }
@@ -167,7 +183,7 @@ object SyGuS14 {
     def constraintCmd: Parser[ConstraintCmd] = "(" ~> "constraint" ~> term <~ ")" ^^ {
       ConstraintCmd(_)
     }
-    
+
     def checkSynthCmd: Parser[CheckSynthCmd] = "(" ~> "check-synth" <~ ")" ^^^ { CheckSynthCmd() }
 
     def setOptsCmd: Parser[SetOptsCmd] = {
@@ -191,8 +207,8 @@ object SyGuS14 {
     def validate[T](parser: Parser[T], expr: String): Either[String, T] = {
       parseAll(phrase(parser), expr) match {
         // parseAll(parser, expr) match {      
-        case m @ Failure(msg, next) => Left(s"Parse failure: $msg")
-        case m @ Error(msg, next)   => Left(s"Parse error: $msg")
+        case m @ Failure(msg, next) => Left(s"Parse failure: $msg, ${next.source}")
+        case m @ Error(msg, next)   => Left(s"Parse error: $msg, ${next.source}")
         case Success(result, next)  => Right(result)
       }
     }
