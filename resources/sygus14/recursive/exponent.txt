@@ -1,0 +1,30 @@
+; exponent: compute the integer exponential x^n
+; Used as a benchmark in "Learning Recursive Functions with Object Oriented Genetic Programming" by Agapitos and Lucas
+
+(set-logic LIA)
+
+(synth-fun recfun ((x Int)(n Int)) Int
+    ((Start Int (x 0
+        (+ Start Start)
+        (- Start Start)
+        (* Start Start)        
+        (ite StartBool Start Start)
+        (recfun Start Start)))
+     (StartBool Bool (
+        (and StartBool StartBool)
+        (or StartBool StartBool)
+        (not StartBool)
+        (> Start Start)
+        (< Start Start)
+        (= Start Start)))
+    )
+)
+
+
+(declare-var x Int)
+(declare-var n Int)
+
+(constraint (=> (= n 0) (= (recfun x 0) 1)))
+(constraint (=> (> n 0) (= (recfun x n)(* x recfun x (- n 1) ))))
+(check-synth)
+
