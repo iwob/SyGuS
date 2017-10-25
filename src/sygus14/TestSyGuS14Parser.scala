@@ -34,6 +34,8 @@ class TestSyGuS14Parser {
     assertEquals( Right("|s|"), parser.validate(parser.symbol, "|s|")  )
     assertEquals( Right("|s'|"), parser.validate(parser.symbol, "|s'|")  )    
     assertEquals( Right("|s''|"), parser.validate(parser.symbol, "|s''|")  )
+    assertEquals( Right("|Błądek|"), parser.validate(parser.symbol, "|Błądek|")  )
+    assertEquals( Right("|科学|"), parser.validate(parser.symbol, "|科学|")  )
   }
   
   @Test
