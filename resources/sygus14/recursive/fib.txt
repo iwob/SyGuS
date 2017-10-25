@@ -1,0 +1,27 @@
+(set-logic LIA)
+
+(synth-fun recfun ((a Int)) Int
+    ((Start Int (a 0
+        (+ Start Start)
+        (- Start Start)
+        (ite StartBool Start Start)
+        (recfun Start)))
+     (StartBool Bool (
+        (and StartBool StartBool)
+        (or StartBool StartBool)
+        (not StartBool)
+        (> Start Start)
+        (< Start Start)
+        (= Start Start)))
+    )
+)
+
+
+(declare-var a Int)
+
+(constraint (=> (= a 0) (= (recfun 0) 0)))
+(constraint (=> (= a 1) (= (recfun 1) 1)))
+(constraint (=> (>= a 2) (= (recfun a) (+ (recfun (- a 1)) (recfun (- a 2))) )))
+
+(check-synth)
+
