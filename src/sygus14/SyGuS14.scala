@@ -38,7 +38,7 @@ object SyGuS14 {
       )
 
     val unguardedSymbolRegex = """[a-zA-Z\-[_\+\*&\|\!~<>=/%\?\.\$\^]]([a-zA-Z0-9\-[_\+\*&\|\!~<>=/%\?\.\$\^]])*""".r
-    val guardedSymbolRegex = """[a-zA-Z\-[_\+\*&\!~<>=/%\?\.\$\^]]([a-zA-Z0-9\-[_\+\*&\!~<>=/%\?\.\$\^]])*""".r    
+    val guardedSymbolRegex = """[a-zA-Z\-[_\+\*&\!'~<>=/%\?\.\$\^]]([a-zA-Z0-9\-[_\+\*&\!'~<>=/%\?\.\$\^]])*""".r    
 
     val guardedSymbol: Parser[String] = "|" ~ guardedSymbolRegex ~ "|" ^^ { case _ ~ s ~ _ => s"|$s|" }
     

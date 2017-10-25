@@ -31,7 +31,8 @@ class TestSyGuS14Parser {
     assertEquals( Right("-"), parser.validate(parser.symbol, "-")  )
     assertEquals( Right("+"), parser.validate(parser.symbol, "+")  )    
     assertEquals( Right("one-times"), parser.validate(parser.symbol, "one-times")  )
-    assertEquals( Right("|s|"), parser.validate(parser.symbol, "|s|")  )    
+    assertEquals( Right("|s|"), parser.validate(parser.symbol, "|s|")  )
+    assertEquals( Right("|s'|"), parser.validate(parser.symbol, "|s'|")  )    
     assertEquals( Right("|s''|"), parser.validate(parser.symbol, "|s''|")  )
   }
   
