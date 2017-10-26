@@ -6,7 +6,7 @@
         (+ Start Start)
         (- Start Start)
         (* Start Start)
-        (% Start Start)
+        (mod Start Start)
         (/ Start Start)
         (ite StartBool Start Start)
         (recfun Start)))
@@ -29,8 +29,8 @@
  ; note that problem is not typically defined for n = 0
 (constraint (=> (= a 0) (= (recfun 0) 0)))
 (constraint (=> (= a 1) (= (recfun 1) 1)))
-(constraint (=> (= (% a 2) 0) (= (recfun a) (- (* 2 (recfun (/ a 2)) ) 1 ) )))
-(constraint (=> (= (% a 2) 1) (= (recfun a) (+ (* 2 (recfun (/ a 2)) ) 1))))
+(constraint (=> (= mod a 2) 0) (= (recfun a) (- (* 2 (recfun (/ a 2)) ) 1 ) )))
+(constraint (=> (= mod a 2) 1) (= (recfun a) (+ (* 2 (recfun (/ a 2)) ) 1))))
 ; closed form is J(n=2^m + l) = 2l + 1, m >= 0, 0 <= l < 2^m
 ; in terms of n, m = floor(log2 n), l = n - 2^m = 2^(floor(log2 n))
 (check-synth)

@@ -25,5 +25,5 @@
 ; (constraint (=> (= a 0) (= (recfun 0) 0)))
 ; (constraint (=> (> a 0) (= (recfun a) (* (+ (recfun (- a 1)) 1 ) 2))))
 ; closed form: T(n) = 2^n - 1, forall n >= 0
-(constraint (= (recfun a) (- (^ 2 n) 1 ) ) )
+(constraint (= (recfun a) (- (^ 2 a) 1 ) ) )
 (check-synth)
