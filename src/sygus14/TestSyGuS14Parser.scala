@@ -207,12 +207,13 @@ class TestSyGuS14Parser {
 
   @Test
   def testParser: Unit = {
-    val root = System.getProperty("user.dir") + "/resources/sygus14"
+    val root = System.getProperty("user.dir") + "/resources/sygus14/recursive"
     val files = getRecursiveListOfFiles(new File( root ) )
 
     var numParsed = 0
     for( f <- files ) {
       try {
+        println( s"parsing $f" )
         val result = SyGuS14.parseSyGuS14File(f)
         if( result.isRight ) {
           numParsed += 1

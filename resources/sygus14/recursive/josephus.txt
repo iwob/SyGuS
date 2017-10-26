@@ -1,0 +1,37 @@
+; Note that this is the version where every *second* person is eliminated
+(set-logic LIA)
+
+(synth-fun recfun ((a Int)) Int
+    ((Start Int (a 0
+        (+ Start Start)
+        (- Start Start)
+        (* Start Start)
+        (% Start Start)
+        (/ Start Start)
+        (ite StartBool Start Start)
+        (recfun Start)))
+     (StartBool Bool (
+        (and StartBool StartBool)
+        (or StartBool StartBool)
+        (not StartBool)
+        (> Start Start)
+        (< Start Start)
+        (= Start Start)))
+    )
+)
+
+
+(declare-var a Int)
+; recursive version:
+; J(1) = 1
+; J(2n) = 2J(n) - 1
+; J(2n+1) = 2J(n) + 1
+ ; note that problem is not typically defined for n = 0
+(constraint (=> (= a 0) (= (recfun 0) 0)))
+(constraint (=> (= a 1) (= (recfun 1) 1)))
+(constraint (=> (= (% a 2) 0) (= (recfun a) (- (* 2 (recfun (/ a 2)) ) 1 ) )))
+(constraint (=> (= (% a 2) 1) (= (recfun a) (+ (* 2 (recfun (/ a 2)) ) 1))))
+; closed form is J(n=2^m + l) = 2l + 1, m >= 0, 0 <= l < 2^m
+; in terms of n, m = floor(log10 n), l = n - 2^m = 2^(floor(log10 n))
+(check-synth)
+
