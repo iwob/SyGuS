@@ -39,8 +39,8 @@ object SyGuS16 {
         }
     }
     
-    def stringConst: Parser[Literal] = stringLiteral ^^ { StringConst(_) } // "\"" ~ symbol ~ "\"" ^^ { case _ ~ xx ~ _ => StringConst(xx) } 
-    override def literal: Parser[Literal] = stringConst | super.literal     
+    def stringConst: Parser[Literal] = stringLiteral ^^ { s => StringConst(s.substring(1, s.size-1)) } // "\"" ~ symbol ~ "\"" ^^ { case _ ~ xx ~ _ => StringConst(xx) }
+    override def literal: Parser[Literal] = stringConst | super.literal
     
     def cmd16: Parser[Cmd] = ( sortDefCmd | varDeclCmd | funDeclCmd | funDefCmd |
       synthFunCmd16 | synthFunCmd14 | constraintCmd | checkSynthCmd | setOptsCmd ) 
