@@ -70,7 +70,10 @@ object SyGuS16 {
   /////////////////////////////////
   
   def parseSyGuS16Text(str: String): Either[String, SyGuS16] = {
-    val lines = str.split("\\r\\n|\\n|\\r").filter { x => !x.trim.startsWith(";") || x.trim.isEmpty }
+    val lines = str.split("\\r\\n|\\n|\\r").map{ x =>
+      val i = x.indexOf(";")
+      if (i == -1) x else x.take(i)
+    }
     val text = lines.mkString("\n")
     // jeep.lang.Diag.println(text)
     val parser = new SyGuS16.Parser
