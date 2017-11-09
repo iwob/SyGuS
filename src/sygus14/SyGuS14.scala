@@ -33,7 +33,9 @@ object SyGuS14 {
     val reservedWords = Set("set-logic", "define-sort", "declare-var",
       "declare-fun", "define-fun", "synth-fun", "constraint", "check-synth", "set-options",
       "BitVec", "Array", "Int", "Bool", "Enum", "Real", "Constant", "Variable", "InputVariable",
-      "LocalVariable", "let", "true", "false" 
+      "LocalVariable", 
+      // "let", 
+      "true", "false" 
       // , "forall", "exists"
       )
 
