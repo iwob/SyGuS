@@ -87,7 +87,6 @@ class TestSyGuS16Parser {
   }
   
   /////////////////////////////////
-
   
   def testParserImpl(rootDir: File): Unit = {
     // val root = System.getProperty("user.dir") + "/resources/sygus14"
@@ -104,11 +103,13 @@ class TestSyGuS16Parser {
     var numParsed = 0
     val progress = new jeep.util.ProgressDisplay( files.length )
     for( f <- files ) {
+      // jeep.lang.Diag.println( f )
       try {
         val result = SyGuS16.parseSyGuS16File(f)
         result match {
           case Right(_) =>  numParsed += 1 
-          case Left(errorMsg) => {           
+          case Left(errorMsg) => {  
+jeep.lang.Diag.println( "failed to parse " + f )            
             bag = add(bag,errorMsg)
             mapErrorToFiles = mapErrorToFiles.updated(errorMsg, mapErrorToFiles.getOrElse(errorMsg, Nil) :+ f )
           }
@@ -147,6 +148,12 @@ class TestSyGuS16Parser {
   @Test
   def testPBEStrings: Unit = {
     val root = System.getProperty("user.dir") + "/resources/sygus16new/PBE_Strings"
+    testParserImpl(new File(root))
+  }
+
+  @Test
+  def testCDGP_ECJ_Strings_formal: Unit = {
+    val root = System.getProperty("user.dir") + "/resources/CDGP_ECJ_Strings_formal"
     testParserImpl(new File(root))
   }
 }
