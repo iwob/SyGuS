@@ -51,7 +51,7 @@
 (constraint 
 	(= (f s) 
 		(str.++ 
-			(str.substr (ithSplit s " " 0) 1 (str.len (ithSplit s " " 0))) "."
+			(str.substr (ithSplit s " " 0) 1 (- (str.len (ithSplit s " " 0)) 1)) "."
 			(ithSplit (ithSplit s " " 1) "-" 0 ) "." 
 			(ithSplit (ithSplit s " " 1) "-" 1 ) "." 
 			(ithSplit (ithSplit s " " 1) "-" 2 )

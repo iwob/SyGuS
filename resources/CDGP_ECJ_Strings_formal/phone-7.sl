@@ -48,6 +48,6 @@
 ; (constraint (= (f "+106 769-858-438") "858")); (constraint (= (f "+83 973-757-831") "757")); (constraint (= (f "+62 647-787-775") "787")); (constraint (= (f "+172 027-507-632") "507")); (constraint (= (f "+72 001-050-856") "050")); (constraint (= (f "+95 310-537-401") "537")); (constraint (= (f "+6 775-969-238") "969"))
 (declare-var s String)
 
-(constraint (= (f s) (str.substr (ithSplit s " " 1) 4 7) ))
+(constraint (= (f s) (str.substr (ithSplit s " " 1) 4 3) ))
 
 (check-synth)

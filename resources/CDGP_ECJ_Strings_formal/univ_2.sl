@@ -48,6 +48,6 @@
 (declare-var col1 String)(declare-var col2 String)
 ; (constraint (= (f "University of Pennsylvania" "Phialdelphia, PA, USA")  "University of Pennsylvania, Phialdelphia, PA, USA")); (constraint (= (f "UCLA" "Los Angeles, CA") "UCLA, Los Angeles, CA, USA")); (constraint (= (f "Cornell University" "Ithaca, New York, USA") "Cornell University, Ithaca, New York, USA")); (constraint (= (f "Penn" "Philadelphia, PA, USA") "Penn, Philadelphia, PA, USA")); (constraint (= (f "University of Maryland College Park" "College Park, MD") "University of Maryland College Park, College Park, MD, USA")); (constraint (= (f "University of Michigan" "Ann Arbor, MI, USA") "University of Michigan, Ann Arbor, MI, USA"))
 (constraint (=> (= (ithSplit col2 " " 2) "USA" ) (= (f col1 col2) (str.++ col1 ", " col2) ) ) ) 
-(constraint (=> (!= (ithSplit col2 " " 2) "USA" ) (= (f col1 col2) (str.++ col1 ", " col2 ", USA") ) ) )
+(constraint (=> (distinct (ithSplit col2 " " 2) "USA" ) (= (f col1 col2) (str.++ col1 ", " col2 ", USA") ) ) )
 
 (check-synth)
