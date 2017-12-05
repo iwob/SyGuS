@@ -45,7 +45,7 @@ object SyGuS14 {
     val guardedSymbol: Parser[String] = "|" ~ guardedSymbolRegex ~ "|" ^^ { case _ ~ s ~ _ => s"|$s|" }
     
     val symbol = (guardedSymbol | unguardedSymbolRegex ) ^^ {
-      case s => if (reservedWords.contains(s)) 
+      case s => if (reservedWords.contains(s))
         throw new SyGuSParserException(s"symbol expected, found reserved word: $s") 
       else s
     }
@@ -71,8 +71,10 @@ object SyGuS14 {
 
     /////////////////////////////////
 
-    def intConst: Parser[IntConst] = wholeNumber ^^ { x => IntConst(x.toInt) }
-    def realConst: Parser[RealConst] = floatingPointNumber ^^ { x => RealConst(x.toDouble) }
+    def intConst: Parser[IntConst] = (wholeNumber ^^ { x => IntConst(x.toInt) }) |
+                                     ("(" ~ "-" ~> wholeNumber <~ ")" ^^ { x => IntConst(-x.toInt) })
+    def realConst: Parser[RealConst] = floatingPointNumber ^^ { x => RealConst(x.toDouble) } |
+                                     ("(" ~ "-" ~> floatingPointNumber <~ ")" ^^ { x => RealConst(-x.toDouble) })
     def boolConst: Parser[BoolConst] = boolean ^^ { b => BoolConst(b) }
     def bvConst: Parser[BVConst] = {
       def bitsToBV(str: String): List[Boolean] = str.toList.map { x => if (x == '0') false else true }
@@ -113,7 +115,7 @@ object SyGuS14 {
       ExistsTerm(sorts,term)
     }
 
-    def term: Parser[Term] = forallTerm | existsTerm | letTerm | compositeTerm | literalTerm | symbolTerm
+    def term: Parser[Term] = forallTerm | existsTerm | letTerm | literalTerm | compositeTerm | symbolTerm
 
     /////////////////////////////////
 
