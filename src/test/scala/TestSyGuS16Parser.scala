@@ -32,7 +32,6 @@ class TestSyGuS16Parser {
       (constraint (= (+ (addExpr1 x y) (addExpr2 y x)) (- x y)))
       (check-synth)"""
 
-     
     val pr = SyGuS16.parseSyGuS16Text(example)
     assertTrue( pr.isRight )
   }

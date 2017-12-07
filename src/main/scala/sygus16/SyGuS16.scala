@@ -43,7 +43,8 @@ object SyGuS16 {
     override def literal: Parser[Literal] = stringConst | super.literal
     
     def cmd16: Parser[Cmd] = ( sortDefCmd | varDeclCmd | funDeclCmd | funDefCmd |
-      synthFunCmd16 | synthFunCmd14 | constraintCmd | checkSynthCmd | setOptsCmd ) 
+      synthFunCmd16 | synthFunCmd14 | constraintCmd | checkSynthCmd | setOptsCmd|
+      invConstraintCmd | primedVarDeclCmd | synthInvCmd )
       // ^^ { case x => jeep.lang.Diag.println( x ); x }
 
     ///////////////////////////////////
@@ -55,7 +56,8 @@ object SyGuS16 {
     ///////////////////////////////////
 
     override def validate[T](parser: Parser[T], expr: String): Either[String, T] = {
-      parseAll(phrase(parser), expr) match {
+      val text = removeComments(expr)
+      parseAll(phrase(parser), text) match {
         // parseAll(parser, expr) match {      
         case m @ Failure(msg, next) => Left(s"Parse failure: $msg, ${next.source}")
         case m @ Error(msg, next)   => Left(s"Parse error: $msg")
@@ -70,15 +72,10 @@ object SyGuS16 {
   /////////////////////////////////
   
   def parseSyGuS16Text(str: String): Either[String, SyGuS16] = {
-    val lines = str.split("\\r\\n|\\n|\\r").map{ x =>
-      val i = x.indexOf(";")
-      if (i == -1) x else x.take(i)
-    }
-    val text = lines.mkString("\n")
     // jeep.lang.Diag.println(text)
     val parser = new SyGuS16.Parser
 
-    parser.parseSyGuS16(text)
+    parser.parseSyGuS16(str)
   }
 
   def parseSyGuS16File(f: java.io.File): Either[String, SyGuS16] =

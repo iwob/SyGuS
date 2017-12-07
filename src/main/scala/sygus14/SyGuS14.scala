@@ -35,7 +35,8 @@ object SyGuS14 {
       "BitVec", "Array", "Int", "Bool", "Enum", "Real", "Constant", "Variable", "InputVariable",
       "LocalVariable", 
       // "let", 
-      "true", "false" 
+      "true", "false",
+      "inv-constraint", "declare-primed-var", "synth-inv"
       // , "forall", "exists"
       )
 
@@ -44,7 +45,7 @@ object SyGuS14 {
 
     val guardedSymbol: Parser[String] = "|" ~ guardedSymbolRegex ~ "|" ^^ { case _ ~ s ~ _ => s"|$s|" }
     
-    val symbol = (guardedSymbol | unguardedSymbolRegex ) ^^ {
+    val symbol: Parser[String] = (guardedSymbol | unguardedSymbolRegex ) ^^ {
       case s => if (reservedWords.contains(s))
         throw new SyGuSParserException(s"symbol expected, found reserved word: $s") 
       else s
@@ -164,6 +165,10 @@ object SyGuS14 {
       case sym ~ se => VarDeclCmd(sym, se)
     }
 
+    def primedVarDeclCmd: Parser[PrimedVarDeclCmd] = "(" ~> "declare-primed-var" ~> symbol ~ sortExpr <~ ")" ^^ {
+      case sym ~ se => PrimedVarDeclCmd(sym, se)
+    }
+
     def funDeclCmd: Parser[FunDeclCmd] = "(" ~> "declare-fun" ~ symbol ~ "(" ~ rep(sortExpr) ~ ")" ~ sortExpr ~ ")" ^^ {
       case _ ~ sym ~ _ ~ list ~ _ ~ se ~ _ => FunDeclCmd(sym, list, se)
     }
@@ -184,8 +189,19 @@ object SyGuS14 {
         }
     }
 
+    def synthInvCmd: Parser[SynthInvCmd] = {
+      "(" ~> "synth-inv" ~> symbol ~ "(" ~ rep(symbolAndSortExpr) ~ ")" <~ ")" ^^ {
+          case sym ~ _ ~ list ~ _ => SynthInvCmd(sym, list)
+        }
+    }
+
     def constraintCmd: Parser[ConstraintCmd] = "(" ~> "constraint" ~> term <~ ")" ^^ {
       ConstraintCmd(_)
+    }
+
+    def invConstraintCmd: Parser[InvConstraintCmd] = "(" ~> "inv-constraint" ~> symbol ~ symbol ~
+      symbol ~ symbol <~ ")" ^^ {
+      case inv ~ pre ~ trans ~ post => InvConstraintCmd(inv, pre, trans, post)
     }
 
     def checkSynthCmd: Parser[CheckSynthCmd] = "(" ~> "check-synth" <~ ")" ^^^ { CheckSynthCmd() }
@@ -198,7 +214,8 @@ object SyGuS14 {
     }
 
     def cmd14: Parser[Cmd] = sortDefCmd | varDeclCmd | funDeclCmd | funDefCmd |
-      synthFunCmd14 | constraintCmd | checkSynthCmd | setOptsCmd /* | failure("not a cmd") */
+      synthFunCmd14 | constraintCmd | checkSynthCmd | setOptsCmd |
+      invConstraintCmd | primedVarDeclCmd | synthInvCmd /* | failure("not a cmd") */
 
     ///////////////////////////////////
 
@@ -209,7 +226,8 @@ object SyGuS14 {
     ///////////////////////////////////
 
     def validate[T](parser: Parser[T], expr: String): Either[String, T] = {
-      parseAll(phrase(parser), expr) match {
+      val text = removeComments(expr)
+      parseAll(phrase(parser), text) match {
         // parseAll(parser, expr) match {      
         case m @ Failure(msg, next) => Left(s"Parse failure: $msg, ${next.source}")
         case m @ Error(msg, next)   => Left(s"Parse error: $msg, ${next.source}")
@@ -217,17 +235,24 @@ object SyGuS14 {
       }
     }
 
-    def parse(expr: String): Either[String, SyGuS14] =
-      validate(syGuS14, expr)
+    def parse(str: String): Either[String, SyGuS14] = {
+      validate(syGuS14, str)
+    }
+
+    def removeComments(s: String): String = {
+      val lines = s.split("\\r\\n|\\n|\\r").map{ x =>
+        val i = x.indexOf(";")
+        if (i == -1) x else x.take(i)
+      }
+      lines.mkString("\n")
+    }
   }
 
   def parseSyGuS14Text(str: String): Either[String, SyGuS14] = {
-    val lines = str.split("\\r\\n|\\n|\\r").filter { x => !x.trim.startsWith(";") || x.trim.isEmpty }
-    val text = lines.mkString("\n")
     // jeep.lang.Diag.println(text)
     val parser = new SyGuS14.Parser
 
-    parser.parse(text)
+    parser.parse(str)
   }
 
   def parseSyGuS14File(f: File): Either[String, SyGuS14] =
