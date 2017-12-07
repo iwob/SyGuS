@@ -1,5 +1,7 @@
 package sygus.instancegen
 
+import scala.language.implicitConversions
+
 object Median {
   import sygus._
   import sygus14._
