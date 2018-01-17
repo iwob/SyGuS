@@ -86,7 +86,7 @@ object SyGuS14 {
 
     def enumConst: Parser[EnumConst] = symbol ~ "::" ~ symbol ^^ { case a ~ _ ~ b => EnumConst(a, b) }
 
-    def literal: Parser[Literal] = intConst | realConst | boolConst | bvConst | enumConst
+    def literal: Parser[Literal] = realConst | intConst | boolConst | bvConst | enumConst
 
     /////////////////////////////////
 
