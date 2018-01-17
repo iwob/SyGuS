@@ -42,6 +42,8 @@ object SyGuS14 {
 
     val unguardedSymbolRegex = """[a-zA-Z\-[_\+\*&\|\!~<>=/%\?\.\$\^]]([a-zA-Z0-9\-[_\+\*&\|\!~<>=/%\?\.\$\^]])*""".r
     val guardedSymbolRegex = """[^|]+""".r
+    // From SMT-LIB 2.6 documentation: "A decimal is a token of the form <numeral>.0*<numeral>"
+    val floatingPointRegex = "[+-]?[0-9]+[.][0-9]*".r
 
     val guardedSymbol: Parser[String] = "|" ~ guardedSymbolRegex ~ "|" ^^ { case _ ~ s ~ _ => s"|$s|" }
     
@@ -74,8 +76,8 @@ object SyGuS14 {
 
     def intConst: Parser[IntConst] = (wholeNumber ^^ { x => IntConst(x.toInt) }) |
                                      ("(" ~ "-" ~> wholeNumber <~ ")" ^^ { x => IntConst(-x.toInt) })
-    def realConst: Parser[RealConst] = floatingPointNumber ^^ { x => RealConst(x.toDouble) } |
-                                     ("(" ~ "-" ~> floatingPointNumber <~ ")" ^^ { x => RealConst(-x.toDouble) })
+    def realConst: Parser[RealConst] = floatingPointRegex ^^ { x => RealConst(x.toDouble) } |
+                                     ("(" ~ "-" ~> floatingPointRegex <~ ")" ^^ { x => RealConst(-x.toDouble) })
     def boolConst: Parser[BoolConst] = boolean ^^ { b => BoolConst(b) }
     def bvConst: Parser[BVConst] = {
       def bitsToBV(str: String): List[Boolean] = str.toList.map { x => if (x == '0') false else true }
@@ -86,7 +88,7 @@ object SyGuS14 {
 
     def enumConst: Parser[EnumConst] = symbol ~ "::" ~ symbol ^^ { case a ~ _ ~ b => EnumConst(a, b) }
 
-    def literal: Parser[Literal] = intConst | realConst | boolConst | bvConst | enumConst
+    def literal: Parser[Literal] = realConst | intConst | boolConst | bvConst | enumConst
 
     /////////////////////////////////
 
