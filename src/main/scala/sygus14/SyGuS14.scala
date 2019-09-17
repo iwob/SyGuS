@@ -141,7 +141,7 @@ object SyGuS14 {
       case tok ~ se => GenericGTerm(tok, se)
     }
 
-    def gterm: Parser[GTerm] = letGTerm | compositeGTerm | literalGTerm | symbolGTerm | genericGTerm
+    def gterm: Parser[GTerm] = letGTerm | genericGTerm | compositeGTerm | literalGTerm | symbolGTerm
 
     // QUOTEDLIT               "\""([a-z]|[A-Z]|{DIGIT}|".")+"\""
     val quotedLiteral: Parser[String] = "\"[a-zA-Z0-9\\.]([a-zA-Z0-9\\.])*\"".r
