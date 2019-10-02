@@ -17,8 +17,8 @@ object SyGuS14 {
 
   import jeep.lang.Diag
 
-  def apply(expr: String): Either[String, SyGuS14] =
-    new Parser().parse(expr)
+  def apply(expr: String, strict: Boolean = false): Either[String, SyGuS14] =
+    new Parser(strict).parse(expr)
 
   /////////////////////////////////
 
@@ -28,7 +28,7 @@ object SyGuS14 {
 
   case class SyGuSParserException(msg: String) extends RuntimeException(msg)
 
-  class Parser extends JavaTokenParsers {
+  class Parser(strict: Boolean = true) extends JavaTokenParsers {
 
     val reservedWords = Set("set-logic", "define-sort", "declare-var",
       "declare-fun", "define-fun", "synth-fun", "constraint", "check-synth", "set-options",
@@ -44,12 +44,14 @@ object SyGuS14 {
     val guardedSymbolRegex = """[^|]+""".r
     // From SMT-LIB 2.6 documentation: "A decimal is a token of the form <numeral>.0*<numeral>"
     val floatingPointRegex = "[+-]?[0-9]+[.][0-9]*".r
+    // In order to use scientific notation, which is not a part of the SMT-LIB specification.
+    val floatingPointSciNotRegex = "[+-]?[0-9]+([.][0-9]*)?[eE][+-]?[0-9]+".r
 
     val guardedSymbol: Parser[String] = "|" ~ guardedSymbolRegex ~ "|" ^^ { case _ ~ s ~ _ => s"|$s|" }
-    
+
     val symbol: Parser[String] = (guardedSymbol | unguardedSymbolRegex ) ^^ {
       case s => if (reservedWords.contains(s))
-        throw new SyGuSParserException(s"symbol expected, found reserved word: $s") 
+        throw new SyGuSParserException(s"symbol expected, found reserved word: $s")
       else s
     }
 
@@ -76,8 +78,14 @@ object SyGuS14 {
 
     def intConst: Parser[IntConst] = (wholeNumber ^^ { x => IntConst(x.toInt) }) |
                                      ("(" ~ "-" ~> wholeNumber <~ ")" ^^ { x => IntConst(-x.toInt) })
-    def realConst: Parser[RealConst] = floatingPointRegex ^^ { x => RealConst(x.toDouble) } |
-                                     ("(" ~ "-" ~> floatingPointRegex <~ ")" ^^ { x => RealConst(-x.toDouble) })
+    def realConst: Parser[RealConst] = {
+      if (strict)
+        floatingPointRegex ^^ { x => RealConst(x.toDouble) } |
+        ("(" ~ "-" ~> floatingPointRegex <~ ")" ^^ { x => RealConst(-x.toDouble) })
+      else
+        (floatingPointSciNotRegex | floatingPointRegex) ^^ { x => RealConst(x.toDouble) } |
+          ("(" ~ "-" ~> (floatingPointSciNotRegex | floatingPointRegex) <~ ")" ^^ { x => RealConst(-x.toDouble) })
+    }
     def boolConst: Parser[BoolConst] = boolean ^^ { b => BoolConst(b) }
     def bvConst: Parser[BVConst] = {
       def bitsToBV(str: String): List[Boolean] = str.toList.map { x => if (x == '0') false else true }
@@ -250,9 +258,9 @@ object SyGuS14 {
     }
   }
 
-  def parseSyGuS14Text(str: String): Either[String, SyGuS14] = {
+  def parseSyGuS14Text(str: String, strict: Boolean = true): Either[String, SyGuS14] = {
     // jeep.lang.Diag.println(text)
-    val parser = new SyGuS14.Parser
+    val parser = new SyGuS14.Parser(strict)
 
     parser.parse(str)
   }

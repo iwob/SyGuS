@@ -14,7 +14,7 @@ object SyGuS16 {
 
   import sygus14._
   
-  class Parser extends sygus14.SyGuS14.Parser {
+  class Parser(strict: Boolean = true) extends sygus14.SyGuS14.Parser(strict) {
   
     override def sortExpr = 
       "String" ^^^ { StringSortExpr() } |      
@@ -71,15 +71,15 @@ object SyGuS16 {
 
   /////////////////////////////////
   
-  def parseSyGuS16Text(str: String): Either[String, SyGuS16] = {
+  def parseSyGuS16Text(str: String, strict: Boolean = true): Either[String, SyGuS16] = {
     // jeep.lang.Diag.println(text)
-    val parser = new SyGuS16.Parser
+    val parser = new SyGuS16.Parser(strict)
 
     parser.parseSyGuS16(str)
   }
 
-  def parseSyGuS16File(f: java.io.File): Either[String, SyGuS16] =
-    parseSyGuS16Text(scala.io.Source.fromFile(f).mkString)
+  def parseSyGuS16File(f: java.io.File, strict: Boolean = true): Either[String, SyGuS16] =
+    parseSyGuS16Text(scala.io.Source.fromFile(f).mkString, strict)
 }
 
 // End ///////////////////////////////////////////////////////////////

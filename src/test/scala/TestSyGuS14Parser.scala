@@ -167,11 +167,19 @@ class TestSyGuS14Parser {
     
     assertTrue( parser.validate(parser.synthFunCmd14, synthFun2 ).isRight )
   }
+
+  @Test
+  def testReal: Unit = {
+    val parser = new Parser(strict=false)
+    assertEquals( Right(RealConst(0.1)), parser.validate(parser.realConst, "0.1") )
+    assertEquals( Right(RealConst(0.1)), parser.validate(parser.realConst, "1e-1") )
+    assertEquals( Right(RealConst(0.1)), parser.validate(parser.realConst, "1.e-1") )
+    assertEquals( Right(RealConst(0.1)), parser.validate(parser.realConst, "1.00e-1") )
+  }
   
   @Test
   def testCmds: Unit = {
-    
-    val parser = new Parser    
+    val parser = new Parser
 
     assertEquals( Right(SetLogicCmd(SetLogicTheory.LIA)), parser.validate(parser.setLogicCmd, "(set-logic LIA)")  )    
     assertEquals( Right(sygus.CheckSynthCmd()), parser.validate(parser.cmd14, "(check-synth)")  )
