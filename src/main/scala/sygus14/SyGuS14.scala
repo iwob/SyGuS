@@ -17,7 +17,7 @@ object SyGuS14 {
 
   import jeep.lang.Diag
 
-  def apply(expr: String, strict: Boolean = false): Either[String, SyGuS14] =
+  def apply(expr: String, strict: Boolean = true): Either[String, SyGuS14] =
     new Parser(strict).parse(expr)
 
   /////////////////////////////////
