@@ -54,7 +54,6 @@ class TestSyGuS14Parser {
   @Test
   def testGTerm: Unit = {
     val parser = new Parser
-    // FIXME: can't parse - for some reason, substituting "minus"    
     val gterm1 = """
       (x y 0 1
         (ite StartBool Start Start)
@@ -79,12 +78,11 @@ class TestSyGuS14Parser {
   def testNTDef: Unit = {
     val parser = new Parser
 
-    // FIXME: can't parse - for some reason, substituting "minus"
     val ntDef1 = """
     (Start Int 
         (x y 0 1
           (+ Start Start)
-          (minus Start Start)
+          (- Start Start)
           (ite StartBool Start Start)
         )
     )"""
@@ -126,15 +124,14 @@ class TestSyGuS14Parser {
     )"""
     
     assertTrue( parser.validate(parser.synthFunCmd14, synthFunSyGuSCOMP2014HtmlExample5 ).isRight )    
-    
-    // FIXME: can't parse <=,=,>= for some reason, subsituting leq etc    
+
     val synthFun1 = """
     (synth-fun max2 ((x Int) (y Int)) Int
       (
         (Start Int 
           (x y 0 1
             (+ Start Start)
-            (minus Start Start)
+            (- Start Start)
             (ite StartBool Start Start)
           )
         )
@@ -148,7 +145,7 @@ class TestSyGuS14Parser {
         (Start Int 
           (x y 0 1
             (+ Start Start)
-            (minus Start Start)
+            (- Start Start)
             (ite StartBool Start Start)
           )
         )
@@ -157,9 +154,9 @@ class TestSyGuS14Parser {
             (and StartBool StartBool)
             (or StartBool StartBool)
             (not StartBool)
-            (le Start Start)
-            (eq Start Start)
-            (ge Start Start)
+            (<= Start Start)
+            (= Start Start)
+            (>= Start Start)
           )
         )
       )
