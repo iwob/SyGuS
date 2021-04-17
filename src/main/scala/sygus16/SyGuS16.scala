@@ -42,9 +42,9 @@ object SyGuS16 {
     def stringConst: Parser[Literal] = stringLiteral ^^ { s => StringConst(s.substring(1, s.size-1)) } // "\"" ~ symbol ~ "\"" ^^ { case _ ~ xx ~ _ => StringConst(xx) }
     override def literal: Parser[Literal] = stringConst | super.literal
     
-    def cmd16: Parser[Cmd] = ( sortDefCmd | varDeclCmd | funDeclCmd | funDefCmd |
-      synthFunCmd16 | synthFunCmd14 | constraintCmd | checkSynthCmd | setOptsCmd|
-      invConstraintCmd | primedVarDeclCmd | synthInvCmd )
+    def cmd16: Parser[Cmd] = sortDefCmd | varDeclCmd | funDeclCmd | funDefCmd |
+      synthFunCmd16 | synthFunCmd14 | constraintCmd | preconditionCmd | checkSynthCmd | setOptsCmd|
+      invConstraintCmd | primedVarDeclCmd | synthInvCmd
       // ^^ { case x => jeep.lang.Diag.println( x ); x }
 
     ///////////////////////////////////

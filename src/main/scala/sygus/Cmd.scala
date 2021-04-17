@@ -24,6 +24,7 @@ class SynthFunCmd(val sym: String,
                   val se: SortExpr) extends Cmd
 
 case class ConstraintCmd(t: Term) extends Cmd
+case class PreconditionCmd(t: Term) extends Cmd
 case class InvConstraintCmd(inv: String, pre: String, trans: String, post: String) extends Cmd
 case class CheckSynthCmd() extends Cmd
 case class SetOptsCmd(list: List[(String, String)]) extends Cmd

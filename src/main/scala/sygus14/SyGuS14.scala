@@ -209,6 +209,10 @@ object SyGuS14 {
       ConstraintCmd(_)
     }
 
+    def preconditionCmd: Parser[PreconditionCmd] = "(" ~> "precondition" ~> term <~ ")" ^^ {
+      PreconditionCmd(_)
+    }
+
     def invConstraintCmd: Parser[InvConstraintCmd] = "(" ~> "inv-constraint" ~> symbol ~ symbol ~
       symbol ~ symbol <~ ")" ^^ {
       case inv ~ pre ~ trans ~ post => InvConstraintCmd(inv, pre, trans, post)
@@ -224,7 +228,7 @@ object SyGuS14 {
     }
 
     def cmd14: Parser[Cmd] = sortDefCmd | varDeclCmd | funDeclCmd | funDefCmd |
-      synthFunCmd14 | constraintCmd | checkSynthCmd | setOptsCmd |
+      synthFunCmd14 | constraintCmd | preconditionCmd | checkSynthCmd | setOptsCmd |
       invConstraintCmd | primedVarDeclCmd | synthInvCmd /* | failure("not a cmd") */
 
     ///////////////////////////////////
